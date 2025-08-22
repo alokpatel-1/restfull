@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { UserDao } from '../daos/user.dao';
-import { RegisterDto, LoginDto, AuthResponseDto } from '../dtos/auth.dto';
+import { RegisterUserDto, RegisterAdminDto, LoginDto, AuthResponseDto } from '../dtos/auth.dto';
 import { config } from '../config';
+import { UserRole } from '../models/user.schema';
 
 export class AuthController {
   private userDao: UserDao;
@@ -12,11 +13,11 @@ export class AuthController {
   }
 
   /**
-   * Register a new user
+   * Register a new regular user
    */
-  register = async (req: Request, res: Response): Promise<Response> => {
+  registerUser = async (req: Request, res: Response): Promise<Response> => {
     try {
-      const registerDto = req.body as RegisterDto;
+      const registerDto = req.body as RegisterUserDto;
 
       // Check if email already exists
       const emailExists = await this.userDao.emailExists(registerDto.email);
@@ -25,25 +26,56 @@ export class AuthController {
       }
 
       // Create user
-      const user = await this.userDao.create(registerDto);
+      const user = await this.userDao.createUser(registerDto);
 
       // Generate JWT token
-      const token = jwt.sign({ id: user._id }, config.jwt.secret, {
+      const token = jwt.sign({ id: user._id, role: user.role }, config.jwt.secret, {
         expiresIn: config.jwt.expiresIn,
       });
 
       // Return response
       return res.status(201).json(
-        new AuthResponseDto(token, user._id.toString(), user.name, user.email)
+        new AuthResponseDto(token, user._id.toString(), user.name, user.email, user.role)
       );
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error('User registration error:', error);
       return res.status(500).json({ message: 'Internal server error' });
     }
   };
 
   /**
-   * Login user
+   * Register a new admin user
+   */
+  registerAdmin = async (req: Request, res: Response): Promise<Response> => {
+    try {
+      const registerDto = req.body as RegisterAdminDto;
+
+      // Check if email already exists
+      const emailExists = await this.userDao.emailExists(registerDto.email);
+      if (emailExists) {
+        return res.status(400).json({ message: 'Email already in use' });
+      }
+
+      // Create admin
+      const admin = await this.userDao.createAdmin(registerDto);
+
+      // Generate JWT token
+      const token = jwt.sign({ id: admin._id, role: admin.role }, config.jwt.secret, {
+        expiresIn: config.jwt.expiresIn,
+      });
+
+      // Return response
+      return res.status(201).json(
+        new AuthResponseDto(token, admin._id.toString(), admin.name, admin.email, admin.role)
+      );
+    } catch (error) {
+      console.error('Admin registration error:', error);
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+  };
+
+  /**
+   * Login user (works for both regular users and admins)
    */
   login = async (req: Request, res: Response): Promise<Response> => {
     try {
@@ -52,23 +84,28 @@ export class AuthController {
       // Find user by email
       const user = await this.userDao.findByEmail(loginDto.email);
       if (!user) {
-        return res.status(401).json({ message: 'Invalid credentials' });
+        return res.status(401).json({ message: 'Please enter a valid email' });
+      }
+
+      // Check if user is active
+      if (!user.isActive) {
+        return res.status(403).json({ message: 'Account is blocked. Please contact an administrator.' });
       }
 
       // Compare password
       const isPasswordValid = await user.comparePassword(loginDto.password);
       if (!isPasswordValid) {
-        return res.status(401).json({ message: 'Invalid credentials' });
+        return res.status(401).json({ message: 'Invalid password' });
       }
 
-      // Generate JWT token
-      const token = jwt.sign({ id: user._id }, config.jwt.secret, {
+      // Generate JWT token with role information
+      const token = jwt.sign({ id: user._id, role: user.role }, config.jwt.secret, {
         expiresIn: config.jwt.expiresIn,
       });
 
       // Return response
       return res.status(200).json(
-        new AuthResponseDto(token, user._id.toString(), user.name, user.email)
+        new AuthResponseDto(token, user._id.toString(), user.name, user.email, user.role)
       );
     } catch (error) {
       console.error('Login error:', error);

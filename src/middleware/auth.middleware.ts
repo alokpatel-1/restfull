@@ -2,12 +2,18 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '../config';
 import { UserDao } from '../daos/user.dao';
+import { UserRole } from '../models/user.schema';
 
 // Extend Express Request interface to include user property
 declare global {
   namespace Express {
     interface Request {
-      user?: any;
+      user?: {
+        id: string;
+        email: string;
+        name: string;
+        role: UserRole;
+      };
     }
   }
 }
@@ -34,7 +40,7 @@ export class AuthMiddleware {
       const token = authHeader.split(' ')[1];
 
       // Verify token
-      const decoded = jwt.verify(token, config.jwt.secret) as { id: string };
+      const decoded = jwt.verify(token, config.jwt.secret) as { id: string; role: UserRole };
       
       // Find user
       const user = await this.userDao.findById(decoded.id);
@@ -42,11 +48,17 @@ export class AuthMiddleware {
         return res.status(401).json({ message: 'Invalid token' });
       }
 
+      // Check if user is active
+      if (!user.isActive) {
+        return res.status(403).json({ message: 'Account is inactive' });
+      }
+
       // Attach user to request
       req.user = {
-        id: user._id,
+        id: user._id.toString(),
         email: user.email,
         name: user.name,
+        role: user.role
       };
 
       next();

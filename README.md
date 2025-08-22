@@ -1,13 +1,19 @@
 # Authentication API
 
-A simple authentication API built with Node.js, Express, TypeScript, and MongoDB.
+A role-based authentication API built with Node.js, Express, TypeScript, and MongoDB.
 
 ## Features
 
-- User registration
-- User login
+- User and Admin roles
+- Separate registration endpoints for each role
+- Common login endpoint
 - JWT-based authentication
+- Role-based access control
 - Protected routes
+- Organized route structure
+- User profile management
+- Password updates
+- User blocking/unblocking (admin only)
 
 ## Technologies Used
 
@@ -32,8 +38,12 @@ src/
   ├── daos/                  # Data Access Objects
   ├── controllers/           # Request handlers
   ├── routes/                # API routes
+  │   ├── routes.ts          # Main routes organizer
+  │   ├── auth.routes.ts     # Authentication routes
+  │   ├── user.routes.ts     # User-specific routes
+  │   ├── admin.routes.ts    # Admin-specific routes
   ├── middleware/            # Express middleware
-  ├── validation/            # Joi validation schemas
+  ├── joi-validation/        # Joi validation schemas
 ```
 
 ## Installation
@@ -74,14 +84,63 @@ npm start
 
 ### Authentication
 
-- **POST /api/auth/register** - Register a new user
+- **POST /api/auth/register/user** - Register a new regular user
   - Body: `{ "name": "User Name", "email": "user@example.com", "password": "password" }`
 
-- **POST /api/auth/login** - Login
+- **POST /api/auth/register/admin** - Register a new admin user
+  - Body: `{ "name": "Admin Name", "email": "admin@example.com", "password": "password" }`
+
+- **POST /api/auth/login** - Login (works for both user types)
   - Body: `{ "email": "user@example.com", "password": "password" }`
 
 - **GET /api/auth/profile** - Get user profile (requires authentication)
   - Headers: `Authorization: Bearer <token>`
+
+### User Routes
+
+- **GET /api/users/profile** - Get user profile
+  - Headers: `Authorization: Bearer <token>`
+
+- **PUT /api/users/profile** - Update user profile
+  - Headers: `Authorization: Bearer <token>`
+  - Body: `{ "name": "Updated Name" }`
+
+- **PUT /api/users/password** - Update user password
+  - Headers: `Authorization: Bearer <token>`
+  - Body: `{ "currentPassword": "oldPassword", "newPassword": "newPassword" }`
+
+- **GET /api/users/dashboard** - User dashboard (regular users only)
+  - Headers: `Authorization: Bearer <token>` (token must belong to a regular user)
+
+- **GET /api/users/profile/settings** - User settings (regular users only)
+  - Headers: `Authorization: Bearer <token>` (token must belong to a regular user)
+
+### Admin Routes
+
+- **GET /api/admin/dashboard** - Admin dashboard (admin users only)
+  - Headers: `Authorization: Bearer <token>` (token must belong to an admin user)
+
+- **GET /api/admin/users** - Get all users (admin users only)
+  - Headers: `Authorization: Bearer <token>` (token must belong to an admin user)
+
+- **GET /api/admin/users/:id** - Get specific user by ID (admin users only)
+  - Headers: `Authorization: Bearer <token>` (token must belong to an admin user)
+
+- **PUT /api/admin/users/:id/status** - Block or unblock a user (admin users only)
+  - Headers: `Authorization: Bearer <token>` (token must belong to an admin user)
+  - Body: `{ "isActive": false }` (to block) or `{ "isActive": true }` (to unblock)
+
+- **GET /api/admin/settings** - System settings (admin users only)
+  - Headers: `Authorization: Bearer <token>` (token must belong to an admin user)
+
+### Role-Based Access Control
+
+The API implements role-based access control with two roles:
+
+1. **User** - Regular user with limited access
+2. **Admin** - Administrator with elevated privileges
+
+JWT tokens include role information, and middleware functions verify appropriate access levels for protected routes.
 
 ## License
 

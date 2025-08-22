@@ -1,10 +1,16 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcrypt';
 
+export enum UserRole {
+  USER = 'user',
+  ADMIN = 'admin'
+}
+
 export interface IUser extends Document {
   email: string;
   password: string;
   name: string;
+  role: UserRole;
   createdAt: Date;
   updatedAt: Date;
   isActive: boolean;
@@ -28,6 +34,12 @@ const userSchema = new Schema<IUser>(
       type: String,
       required: true,
       trim: true,
+    },
+    role: {
+      type: String,
+      enum: Object.values(UserRole),
+      default: UserRole.USER,
+      required: true,
     },
     isActive: {
       type: Boolean,

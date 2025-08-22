@@ -1,7 +1,7 @@
 import express, { Application, Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import { config } from './config';
-import { AuthRoutes } from './routes/auth.routes';
+import { Routes } from './routes/routes';
 
 class Server {
   private app: Application;
@@ -27,8 +27,8 @@ class Server {
       res.status(200).json({ status: 'ok' });
     });
 
-    // Auth routes
-    this.app.use('/api/auth', new AuthRoutes().router);
+    // API routes - using the main routes file
+    this.app.use('/api', new Routes().router);
 
     // 404 route
     this.app.use('*', (req: Request, res: Response) => {
@@ -56,6 +56,7 @@ class Server {
       // Start server
       this.app.listen(config.port, () => {
         console.log(`Server running on port ${config.port}`);
+        console.log(`Role-based authentication API is ready!`);
       });
     } catch (error) {
       console.error('Failed to start server:', error);
