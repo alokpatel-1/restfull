@@ -2,6 +2,7 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import { config } from './config';
 import { Routes } from './routes/routes';
+import { setupSwagger } from './swagger';
 
 class Server {
   private app: Application;
@@ -26,6 +27,9 @@ class Server {
     this.app.get('/health', (req: Request, res: Response) => {
       res.status(200).json({ status: 'ok' });
     });
+
+    // Setup Swagger documentation
+    setupSwagger(this.app);
 
     // API routes - using the main routes file
     this.app.use('/api', new Routes().router);
@@ -56,8 +60,8 @@ class Server {
       // Start server
       this.app.listen(config.port, () => {
         console.log(`Server running on port ${config.port}`);
-        console.log(`health check: http://localhost:${config.port}/health`);
-        console.log(`API routes: http://localhost:${config.port}/api`);
+        console.log(`Health check: http://localhost:${config.port}/health`);
+        console.log(`API Documentation: http://localhost:${config.port}/api-docs`);
       });
     } catch (error) {
       console.error('Failed to start server:', error);

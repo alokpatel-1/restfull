@@ -24,6 +24,7 @@ A role-based authentication API built with Node.js, Express, TypeScript, and Mon
 - JWT for authentication
 - Joi for request validation
 - Bcrypt for password hashing
+- Swagger/OpenAPI for API documentation
 
 ## Project Structure
 
@@ -33,6 +34,7 @@ The project follows a flat structure with DTO and DAO design patterns:
 src/
   ├── config.ts              # Application configuration
   ├── server.ts              # Express server setup
+  ├── swagger.ts             # Swagger configuration
   ├── models/                # MongoDB models
   ├── dtos/                  # Data Transfer Objects
   ├── daos/                  # Data Access Objects
@@ -44,6 +46,10 @@ src/
   │   ├── admin.routes.ts    # Admin-specific routes
   ├── middleware/            # Express middleware
   ├── joi-validation/        # Joi validation schemas
+  ├── swagger-docs/          # Swagger documentation
+      ├── auth.swagger.ts    # Auth endpoints documentation
+      ├── user.swagger.ts    # User endpoints documentation
+      ├── admin.swagger.ts   # Admin endpoints documentation
 ```
 
 ## Installation
@@ -79,6 +85,20 @@ npm run dev
 npm run build
 npm start
 ```
+
+## API Documentation
+
+The API is documented using Swagger (OpenAPI) and is available at:
+
+```
+http://localhost:3000/api-docs
+```
+
+The Swagger UI provides an interactive documentation where you can:
+- Explore all available endpoints
+- See request/response schemas
+- Test API endpoints directly from the browser
+- View authentication requirements for each endpoint
 
 ## API Endpoints
 
