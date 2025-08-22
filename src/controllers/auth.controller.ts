@@ -29,9 +29,11 @@ export class AuthController {
       const user = await this.userDao.createUser(registerDto);
 
       // Generate JWT token
-      const token = jwt.sign({ id: user._id, role: user.role }, config.jwt.secret, {
-        expiresIn: config.jwt.expiresIn,
-      });
+      const token = jwt.sign(
+        { id: user._id.toString(), role: user.role },
+        config.jwt.secret,
+        { expiresIn: '1h' }
+      );
 
       // Return response
       return res.status(201).json(
@@ -60,9 +62,11 @@ export class AuthController {
       const admin = await this.userDao.createAdmin(registerDto);
 
       // Generate JWT token
-      const token = jwt.sign({ id: admin._id, role: admin.role }, config.jwt.secret, {
-        expiresIn: config.jwt.expiresIn,
-      });
+      const token = jwt.sign(
+        { id: admin._id.toString(), role: admin.role },
+        config.jwt.secret,
+        { expiresIn: '1h' }
+      );
 
       // Return response
       return res.status(201).json(
@@ -99,9 +103,11 @@ export class AuthController {
       }
 
       // Generate JWT token with role information
-      const token = jwt.sign({ id: user._id, role: user.role }, config.jwt.secret, {
-        expiresIn: config.jwt.expiresIn,
-      });
+      const token = jwt.sign(
+        { id: user._id.toString(), role: user.role },
+        config.jwt.secret,
+        { expiresIn: '1h' }
+      );
 
       // Return response
       return res.status(200).json(

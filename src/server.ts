@@ -56,7 +56,8 @@ class Server {
       // Start server
       this.app.listen(config.port, () => {
         console.log(`Server running on port ${config.port}`);
-        console.log(`Role-based authentication API is ready!`);
+        console.log(`health check: http://localhost:${config.port}/health`);
+        console.log(`API routes: http://localhost:${config.port}/api`);
       });
     } catch (error) {
       console.error('Failed to start server:', error);
