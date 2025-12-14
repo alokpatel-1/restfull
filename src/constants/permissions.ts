@@ -36,6 +36,13 @@ export const ROLES = {
     MODERATOR: 'moderator',
 } as const;
 
+export const COMMON_CONSTANTS = {
+    DEFAULT: 'default',
+    ADMIN: 'admin',
+    USER: 'user',
+    EMPTY: 'empty'
+}
+
 export const BASIC_PERMISSIONS = [
     { name: 'user:create', description: 'Create user' },
     { name: 'user:read', description: 'Read user details' },

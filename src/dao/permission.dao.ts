@@ -122,6 +122,7 @@ class PermissionDao {
                 { upsert: true }
             );
         }
+        return;
     }
 }
 

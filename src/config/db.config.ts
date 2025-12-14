@@ -127,14 +127,14 @@ class DatabaseConfig {
       await permissionService.seedDefaultPermissions(permissions);
 
       console.log('✅ Basic default permissions seeded successfully');
-      process.exit(0);
+      return;
     } catch (error: any) {
       if (error.code === 11000) {
         console.warn('⚠️ Some permissions already exist, skipping duplicates');
       } else {
         console.error('❌ Error seeding permissions:', error);
       }
-      process.exit(1);
+      return;
     }
   };
 }
