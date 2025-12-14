@@ -107,21 +107,20 @@ class PermissionDao {
  */
     public async seedDefaultPermissions(permissions: any[]): Promise<void> {
         const permissionDocs = permissions.map(p => ({
-            ...p,
-            category: 'default'
-        }));
-        for (const permission of permissionDocs) {
-            await PermissionModel.updateOne(
-                { name: permission.name },
-                {
+            updateOne: {
+                filter: { name: p.name },
+                update: {
                     $setOnInsert: {
-                        ...permission,
+                        ...p,
                         category: 'default'
                     }
                 },
-                { upsert: true }
-            );
-        }
+                upsert: true
+            }
+        }));
+
+        await PermissionModel.bulkWrite(permissionDocs);
+
         return;
     }
 }

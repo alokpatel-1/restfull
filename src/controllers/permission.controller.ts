@@ -11,7 +11,7 @@ import { validationResult } from 'express-validator';
 import { permissionService } from '../services/permission.service';
 import { responseUtil } from '../utils/response.util';
 import { HTTP_STATUS } from '../constants/httpStatus';
-import { COMMON_CONSTANTS } from '../constants/permissions';
+import { APP_CONSTANTS } from '../constants/permissions';
 
 /**
  * Permission Controller class
@@ -51,7 +51,7 @@ export default class PermissionController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const category = req.query.category as string || COMMON_CONSTANTS.DEFAULT;
+      const category = req.query.category as string || APP_CONSTANTS.DEFAULT;
       const permissions = await permissionService.getAllPermissions(category);
       responseUtil.success(res, HTTP_STATUS.OK, 'Permissions fetched successfully', permissions);
     } catch (error) {

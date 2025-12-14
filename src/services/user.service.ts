@@ -19,7 +19,8 @@ import { IUser } from '../models/user.model';
 import { logger } from '../utils/logger';
 import jwt from 'jsonwebtoken';
 import { envConfig } from '../config/env.config';
-import { Role } from '../constants/permissions';
+import { BASIC_PERMISSIONS, Role } from '../constants/permissions';
+import { userPermissionDao } from '../dao/user-permission.dao';
 
 /**
  * Custom error class for business logic errors
@@ -56,6 +57,7 @@ class UserService {
 
       // Create user through DAO
       const user = await userDao.create(userData);
+      await this.updateUserPermissions(user.email);
 
       // Transform to response DTO (exclude password)
       return this.mapToUserResponseDto(user);
@@ -65,6 +67,28 @@ class UserService {
       }
       logger.error('Error creating user:', error);
       throw new ServiceError('Failed to create user', 500);
+    }
+  }
+
+  public async updateUserPermissions(email: string, permissions?: any[]): Promise<void> {
+    try {
+      if (!email) {
+        throw new ServiceError('Email is required to update permissions', 400);
+      }
+
+      const user = await userDao.findByEmail(email);
+      if (!user) {
+        throw new ServiceError('User not found', 404);
+      }
+
+      // update permissions logic here
+      const permissionJSON = (permissions || BASIC_PERMISSIONS).map(p => p.name);
+
+      await userPermissionDao.bulkPermissionUpdateByEmail(email, permissionJSON);
+      return;
+    } catch (error) {
+      logger.error('Error updating user permissions:', error);
+      throw new ServiceError('Failed to update user permissions', 500);
     }
   }
 
@@ -211,6 +235,11 @@ class UserService {
         throw new ServiceError('Invalid email or password', 401);
       }
 
+      let permissions: any = await userPermissionDao.getUserPermissions(user.email);
+      if (permissions.length) {
+        permissions = permissions.map((p: any) => p.permissionName);
+      }
+
       // Generate JWT token
       const token = this.generateToken(
         user._id.toString(),
@@ -220,6 +249,7 @@ class UserService {
 
       return {
         user: this.mapToUserResponseDto(user),
+        permissions: permissions ?? [],
         token,
       };
     } catch (error) {

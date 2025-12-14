@@ -5,6 +5,8 @@
  * The DAO layer is the ONLY layer that communicates with the database.
  */
 
+import { logger } from '../utils/logger';
+import { APP_CONSTANTS } from '../constants/permissions';
 import { UserPermissionModel, IUserPermission } from '../models/user-permission.model';
 
 /**
@@ -112,6 +114,33 @@ class UserPermissionDao {
         }).exec();
 
         return userPermissions.map((up) => up.userEmail);
+    }
+
+    public async bulkPermissionUpdateByEmail(
+        userEmail: string,
+        permissions: string[],
+        grantedBy?: string
+    ): Promise<void> {
+        const bulkOps = permissions.map((permissionName) => ({
+            updateOne: {
+                filter: {
+                    userEmail: userEmail.toLowerCase(),
+                    permissionName: permissionName.toLowerCase(),
+                },
+                update: {
+                    $setOnInsert: {
+                        userEmail: userEmail.toLowerCase(),
+                        permissionName: permissionName.toLowerCase(),
+                        grantedBy: grantedBy?.toLowerCase() ?? APP_CONSTANTS.SYSTEM,
+                    },
+                },
+                upsert: true,
+            },
+        }));
+
+        if (bulkOps.length > 0) {
+            await UserPermissionModel.bulkWrite(bulkOps);
+        }
     }
 }
 

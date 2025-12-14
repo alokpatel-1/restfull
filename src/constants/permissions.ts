@@ -36,15 +36,15 @@ export const ROLES = {
     MODERATOR: 'moderator',
 } as const;
 
-export const COMMON_CONSTANTS = {
+export const APP_CONSTANTS = {
     DEFAULT: 'default',
     ADMIN: 'admin',
     USER: 'user',
-    EMPTY: 'empty'
+    EMPTY: 'empty',
+    SYSTEM: 'system',
 }
 
 export const BASIC_PERMISSIONS = [
-    { name: 'user:create', description: 'Create user' },
     { name: 'user:read', description: 'Read user details' },
     { name: 'user:update', description: 'Update user details' },
     { name: 'user:delete', description: 'Delete user' },

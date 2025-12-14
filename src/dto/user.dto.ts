@@ -54,5 +54,6 @@ export interface LoginUserDto {
 export interface AuthResponseDto {
     user: UserResponseDto;
     token: string;
+    permissions: string[];
 }
 
