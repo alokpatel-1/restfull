@@ -1,3 +1,4 @@
+import { permissionService } from './../services/permission.service';
 /**
  * Database Configuration
  * 
@@ -9,6 +10,7 @@
 import mongoose, { Connection, Mongoose } from 'mongoose';
 import { envConfig } from './env.config';
 import { logger } from '../utils/logger';
+import { BASIC_PERMISSIONS, Permission } from '../constants/permissions';
 
 /**
  * Database configuration class
@@ -17,6 +19,7 @@ import { logger } from '../utils/logger';
 class DatabaseConfig {
   private mongooseInstance: Mongoose | null = null;
   private connection: Connection | null = null;
+  private DEFAULT_PERMISSIONS = BASIC_PERMISSIONS;
 
   /**
    * Establishes connection to MongoDB
@@ -112,7 +115,28 @@ class DatabaseConfig {
    */
   public isConnected(): boolean {
     return this.connection?.readyState === 1;
-  }
+  };
+
+  public seedDefaultPermissions = async () => {
+    try {
+      const permissions = BASIC_PERMISSIONS.map(p => ({
+        ...p,
+        category: 'default'
+      }));
+      logger
+      await permissionService.seedDefaultPermissions(permissions);
+
+      console.log('✅ Basic default permissions seeded successfully');
+      process.exit(0);
+    } catch (error: any) {
+      if (error.code === 11000) {
+        console.warn('⚠️ Some permissions already exist, skipping duplicates');
+      } else {
+        console.error('❌ Error seeding permissions:', error);
+      }
+      process.exit(1);
+    }
+  };
 }
 
 // Export a singleton instance

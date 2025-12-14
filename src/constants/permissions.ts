@@ -36,6 +36,17 @@ export const ROLES = {
     MODERATOR: 'moderator',
 } as const;
 
+export const BASIC_PERMISSIONS = [
+    { name: 'user:create', description: 'Create user' },
+    { name: 'user:read', description: 'Read user details' },
+    { name: 'user:update', description: 'Update user details' },
+    { name: 'user:delete', description: 'Delete user' },
+    { name: 'user:list', description: 'List users' },
+
+    { name: 'profile:read', description: 'Read own profile' },
+    { name: 'profile:update', description: 'Update own profile' }
+];
+
 /**
  * Type for permission values
  */

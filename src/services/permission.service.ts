@@ -276,6 +276,15 @@ class PermissionService {
             updatedAt: permission.updatedAt,
         };
     }
+
+    public async seedDefaultPermissions(permissions: any): Promise<void> {
+        try {
+            await permissionDao.seedDefaultPermissions(permissions);
+            return;
+        } catch (error) {
+            throw new ServiceError('Failed to seed default permissions', 500);
+        }
+    }
 }
 
 // Export a singleton instance

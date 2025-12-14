@@ -5,6 +5,7 @@
  * The DAO layer is the ONLY layer that communicates with the database.
  */
 
+import { logger } from '../utils/logger';
 import { PermissionModel, IPermission } from '../models/permission.model';
 
 /**
@@ -98,6 +99,29 @@ class PermissionDao {
             name: name.toLowerCase(),
         }).exec();
         return count > 0;
+    };
+
+    /**
+ * Seeds default permissions into the database
+ * @param permissions - Array of permission objects with name and description
+ */
+    public async seedDefaultPermissions(permissions: any[]): Promise<void> {
+        const permissionDocs = permissions.map(p => ({
+            ...p,
+            category: 'default'
+        }));
+        for (const permission of permissionDocs) {
+            await PermissionModel.updateOne(
+                { name: permission.name },
+                {
+                    $setOnInsert: {
+                        ...permission,
+                        category: 'default'
+                    }
+                },
+                { upsert: true }
+            );
+        }
     }
 }
 
