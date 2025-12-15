@@ -244,7 +244,8 @@ class UserService {
       const token = this.generateToken(
         user._id.toString(),
         user.email,
-        user.role
+        user.role,
+        permissions
       );
 
       return {
@@ -268,11 +269,12 @@ class UserService {
    * @param role - User role
    * @returns string - JWT token
    */
-  private generateToken(userId: string, email: string, role: Role): string {
+  private generateToken(userId: string, email: string, role: Role, permissions: string[]): string {
     const payload = {
       id: userId,
       email,
       role,
+      permissions
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

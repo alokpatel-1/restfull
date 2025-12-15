@@ -43,18 +43,9 @@ export default class AuthMiddleware {
     ): Promise<void> {
         try {
             // Extract token from Authorization header
-            const authHeader = req.headers.authorization;
-
-            if (!authHeader || !authHeader.startsWith('Bearer ')) {
-                responseUtil.unauthorized(
-                    res,
-                    'Authentication required. Please provide a valid token.'
-                );
-                return;
-            }
-
-            // Extract token (remove 'Bearer ' prefix)
-            const token = authHeader.substring(7);
+            const token =
+                req.cookies?.token ||
+                req.headers.authorization?.split(' ')[1];
 
             if (!token) {
                 responseUtil.unauthorized(res, 'Token is missing');

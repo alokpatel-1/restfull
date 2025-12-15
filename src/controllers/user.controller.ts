@@ -240,6 +240,26 @@ export class UserController {
       const loginData: LoginUserDto = req.body;
       const authResponse = await userService.login(loginData);
 
+      // 🔐 Set JWT token (HttpOnly)
+      res.cookie('token', authResponse.token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      });
+
+      // 🧩 Set permissions (frontend-readable)
+      res.cookie(
+        'permissions',
+        JSON.stringify(authResponse.permissions),
+        {
+          httpOnly: false,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 7 * 24 * 60 * 60 * 1000
+        }
+      );
+
       responseUtil.success(
         res,
         HTTP_STATUS.OK,

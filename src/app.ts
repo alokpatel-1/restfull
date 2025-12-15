@@ -10,6 +10,8 @@ import express, { Application } from 'express';
 import routes from './routes';
 import { errorMiddleware } from './middleware/error.middleware';
 import { logger } from './utils/logger';
+import cookieParser from 'cookie-parser';
+
 
 /**
  * Creates and configures the Express application
@@ -23,6 +25,9 @@ export function createApp(): Application {
 
   // Middleware: Parse URL-encoded request bodies
   app.use(express.urlencoded({ extended: true }));
+
+  // Middleware: Parse cookies
+  app.use(cookieParser());
 
   // Middleware: Request logging
   app.use((req, res, next) => {
