@@ -198,7 +198,7 @@ export class UserController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const { id } = req.params;
+      const id = req.user?.id;
 
       // Basic validation
       if (!id) {
@@ -245,7 +245,7 @@ export class UserController {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        maxAge: 60 * 60 * 1000 // 1 hour
       });
 
       // 🧩 Set permissions (frontend-readable)
@@ -256,7 +256,7 @@ export class UserController {
           httpOnly: false,
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'strict',
-          maxAge: 7 * 24 * 60 * 60 * 1000
+          maxAge: 60 * 60 * 1000 // 1 hour
         }
       );
 

@@ -66,6 +66,7 @@ export class UserRoutes {
       this.userController.getUserByEmail
     );
 
+    // Get user by ID
     this.router.get(
       '/:id',
       idValidation,
@@ -74,6 +75,7 @@ export class UserRoutes {
       this.userController.getUserById
     );
 
+    // Update user by ID
     this.router.put(
       '/:id',
       idValidation,
@@ -83,11 +85,11 @@ export class UserRoutes {
       this.userController.updateUser
     );
 
+    // Delete user by ID
     this.router.delete(
-      '/:id',
+      '/delete/me',
       idValidation,
       this.authMiddleware.authenticate,
-      authorizationMiddleware.requirePermission(PERMISSIONS.USERS_DELETE),
       this.userController.deleteUser
     );
   }

@@ -13,12 +13,12 @@
  */
 export const PERMISSIONS: any = {
     // User permissions
-    USERS_READ: 'users.read',
-    USERS_CREATE: 'users.create',
-    USERS_UPDATE: 'users.update',
-    USERS_DELETE: 'users.delete',
-    USERS_UPDATE_OWN: 'users.update.own', // Users can update their own profile
-    USERS_DELETE_OWN: 'users.delete.own', // Users can delete their own account
+    USERS_READ: 'user:read',
+    USERS_CREATE: 'user:create',
+    USERS_UPDATE: 'user:update',
+    USERS_DELETE: 'user:delete',
+    USERS_UPDATE_OWN: 'user:update:own', // Users can update their own profile
+    USERS_DELETE_OWN: 'user:delete:own', // Users can delete their own account
 
     // Add more permissions as needed
     // ADMIN_ACCESS: 'admin.access',

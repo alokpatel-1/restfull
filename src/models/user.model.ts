@@ -20,6 +20,7 @@ export interface IUser extends Document {
     password: string;
     role: Role;
     isDeleted?: boolean;
+    isActive: boolean;
     createdAt: Date;
     updatedAt: Date;
     comparePassword(candidatePassword: string): Promise<boolean>;
@@ -60,6 +61,10 @@ const userSchema: Schema<IUser> = new Schema(
             enum: Object.values(ROLES),
             default: ROLES.USER,
             required: true,
+        },
+        isActive: {
+            type: Boolean,
+            default: true,
         },
         isDeleted: {
             type: Boolean,
