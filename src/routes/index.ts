@@ -8,7 +8,6 @@
 
 import { Router } from 'express';
 import userRoutes from './user.routes';
-import permissionRoutes from './permission.routes';
 
 const router = Router();
 
@@ -26,7 +25,6 @@ router.get('/health', (req, res) => {
 
 // Mount route modules
 router.use('/users', userRoutes);
-router.use('/permissions', permissionRoutes);
 
 export default router;
 
