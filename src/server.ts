@@ -25,10 +25,6 @@ async function startServer(): Promise<void> {
         logger.info('Connecting to database...');
         await dbConfig.connect();
 
-        // Seed default permissions
-        logger.info('Seeding default permissions if necessary...');
-        await dbConfig.seedDefaultPermissions();
-
         // Start HTTP server
         const server = app.listen(envConfig.PORT, () => {
             logger.info(`Server is running on port ${envConfig.PORT}`);
