@@ -7,8 +7,8 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { responseUtil } from '../utils/response.util';
-import { Permission, PERMISSIONS, ROLES } from '../constants/permissions';
+import { responseUtil } from '../shared/utils/response.util';
+import { Permission, PERMISSIONS, ROLES } from '../shared/constants/permissions';
 
 /**
  * Authorization middleware class

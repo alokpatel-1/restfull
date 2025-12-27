@@ -25,6 +25,8 @@ class EnvConfig {
   // JWT configuration
   public readonly JWT_SECRET: string;
   public readonly JWT_EXPIRES_IN: string;
+  public readonly JWT_REFRESH_SECRET: string;
+  public readonly JWT_REFRESH_EXPIRES_IN: string;
 
   constructor() {
     // Server configuration
@@ -36,7 +38,9 @@ class EnvConfig {
 
     // JWT configuration
     this.JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-    this.JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+    this.JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
+    this.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key-change-in-production';
+    this.JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
 
     // Validate required environment variables
     this.validate();
@@ -55,6 +59,9 @@ class EnvConfig {
 
     if (this.NODE_ENV === 'production' && !this.JWT_SECRET) {
       requiredVars.push('JWT_SECRET');
+    }
+    if (this.NODE_ENV === 'production' && !this.JWT_REFRESH_SECRET) {
+      requiredVars.push('JWT_REFRESH_SECRET');
     }
 
     if (requiredVars.length > 0) {

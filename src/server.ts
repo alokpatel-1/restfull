@@ -10,7 +10,7 @@
 import { createApp } from './app';
 import { dbConfig } from './config/db.config';
 import { envConfig } from './config/env.config';
-import { logger } from './utils/logger';
+import { logger } from './shared/utils/logger';
 
 /**
  * Main function to start the server

@@ -11,30 +11,30 @@
  * These are the standard permission names used in the system.
  * Permissions are stored in the database and can be managed via API.
  */
-export const PERMISSIONS: any = {
+export enum PERMISSIONS {
     // User permissions
-    USERS_READ: 'user:read',
-    USERS_CREATE: 'user:create',
-    USERS_UPDATE: 'user:update',
-    USERS_DELETE: 'user:delete',
-    USERS_UPDATE_OWN: 'user:update:own', // Users can update their own profile
-    USERS_DELETE_OWN: 'user:delete:own', // Users can delete their own account
+    USERS_READ = 'user:read',
+    USERS_CREATE = 'user:create',
+    USERS_UPDATE = 'user:update',
+    USERS_DELETE = 'user:delete',
+    USERS_UPDATE_OWN = 'user:update:own', // Users can update their own profile
+    USERS_DELETE_OWN = 'user:delete:own', // Users can delete their own account
 
     // Add more permissions as needed
-    // ADMIN_ACCESS: 'admin.access',
-    // CONTENT_MANAGE: 'content.manage',
-} as const;
+    // ADMIN_ACCESS = 'admin.access',
+    // CONTENT_MANAGE = 'content.manage',
+}
 
 /**
  * Role definitions
  * Roles are stored in the user model.
  * Permissions are managed separately via the UserPermission model.
  */
-export const ROLES = {
-    USER: 'user',
-    ADMIN: 'admin',
-    MODERATOR: 'moderator',
-} as const;
+export enum ROLES {
+    USER = 'user',
+    ADMIN = 'admin',
+    MODERATOR = 'moderator',
+}
 
 export const APP_CONSTANTS = {
     DEFAULT: 'default',
@@ -57,10 +57,10 @@ export const BASIC_PERMISSIONS = [
 /**
  * Type for permission values
  */
-export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS] | string;
+export type Permission = PERMISSIONS | string;
 
 /**
  * Type for role values
  */
-export type Role = typeof ROLES[keyof typeof ROLES];
+export type Role = ROLES;
 

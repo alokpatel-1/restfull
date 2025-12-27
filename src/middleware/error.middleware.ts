@@ -8,10 +8,10 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { ServiceError } from '../services/user.service';
-import { responseUtil } from '../utils/response.util';
-import { HTTP_STATUS } from '../constants/httpStatus';
-import { logger } from '../utils/logger';
+import { ServiceError } from '../shared/exceptions/service.error';
+import { responseUtil } from '../shared/utils/response.util';
+import { HTTP_STATUS } from '../shared/constants/httpStatus';
+import { logger } from '../shared/utils/logger';
 import { ValidationError } from 'mongoose';
 
 /**

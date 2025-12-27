@@ -7,7 +7,7 @@
  */
 
 import { Router } from 'express';
-import userRoutes from './user.routes';
+import authRoutes from '../auth/routes/auth.routes';
 
 const router = Router();
 
@@ -15,7 +15,7 @@ const router = Router();
  * Health check endpoint
  * Useful for monitoring and load balancers
  */
-router.get('/health', (req, res) => {
+router.get('/health', (_req, res) => {
   res.status(200).json({
     status: 'OK',
     timestamp: new Date().toISOString(),
@@ -24,7 +24,7 @@ router.get('/health', (req, res) => {
 });
 
 // Mount route modules
-router.use('/users', userRoutes);
+router.use('/auth', authRoutes);
 
 export default router;
 

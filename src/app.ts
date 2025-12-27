@@ -9,7 +9,7 @@
 import express, { Application } from 'express';
 import routes from './routes';
 import { errorMiddleware } from './middleware/error.middleware';
-import { logger } from './utils/logger';
+import { logger } from './shared/utils/logger';
 import cookieParser from 'cookie-parser';
 
 
@@ -30,7 +30,7 @@ export function createApp(): Application {
   app.use(cookieParser());
 
   // Middleware: Request logging
-  app.use((req, res, next) => {
+  app.use((req, _res, next) => {
     logger.info(`${req.method} ${req.path}`, {
       ip: req.ip,
       userAgent: req.get('user-agent'),
