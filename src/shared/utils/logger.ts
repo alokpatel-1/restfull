@@ -65,12 +65,19 @@ class Logger {
    */
   private log(level: LogLevel, message: string, data?: unknown): void {
     const timestamp = new Date().toISOString();
-    const logEntry = {
+    const logEntry: {
+      timestamp: string;
+      level: LogLevel;
+      message: string;
+      data?: unknown;
+    } = {
       timestamp,
       level,
       message,
-      ...(data && { data }),
     };
+    if (data !== undefined && data !== null) {
+      logEntry.data = data;
+    }
 
     const logString = JSON.stringify(logEntry, null, 2);
 

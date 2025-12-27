@@ -38,7 +38,7 @@ export interface UserResponseDto {
   id: string;
   name: string;
   email: string;
-  role: string;
+  role: string[];
   permissions: string[];
   createdAt: Date;
   updatedAt: Date;
@@ -66,5 +66,28 @@ export interface RefreshTokenDto {
 export interface RefreshTokenResponseDto {
   accessToken: string;
   refreshToken: string;
+}
+
+/**
+ * DTO for forgot password request
+ */
+export interface ForgotPasswordDto {
+  email: string;
+}
+
+/**
+ * DTO for reset password request
+ */
+export interface ResetPasswordDto {
+  token: string;
+  password: string;
+}
+
+/**
+ * DTO for change password request
+ */
+export interface ChangePasswordDto {
+  currentPassword: string;
+  newPassword: string;
 }
 

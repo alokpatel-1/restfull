@@ -5,6 +5,7 @@
  * Handles request/response logic and delegates business logic to the service layer.
  */
 
+/// <reference path="../../shared/types/express.d.ts" />
 import { Request, Response, NextFunction } from 'express';
 import { validationResult } from 'express-validator';
 import { authService } from '../services/auth.service';
@@ -286,6 +287,126 @@ class AuthController {
     res.clearCookie('accessToken', { path: '/' });
     res.clearCookie('refreshToken', { path: '/' });
   }
+
+  /**
+   * Forgot password
+   * POST /api/auth/forgot-password
+   */
+  public forgotPassword = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      // Check for validation errors
+      const validationErrors = validationResult(req);
+      if (!validationErrors.isEmpty()) {
+        const formattedErrors = formatValidationErrors(validationErrors.array());
+        responseUtil.error(
+          res,
+          HTTP_STATUS.VALIDATION_ERROR,
+          'Validation failed',
+          formattedErrors
+        );
+        return;
+      }
+
+      const { email } = req.body;
+      await authService.forgotPassword({ email });
+
+      // Always return success to prevent email enumeration
+      responseUtil.success(
+        res,
+        HTTP_STATUS.OK,
+        'If an account with that email exists, a password reset link has been sent.'
+      );
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * Reset password
+   * POST /api/auth/reset-password
+   */
+  public resetPassword = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      // Check for validation errors
+      const validationErrors = validationResult(req);
+      if (!validationErrors.isEmpty()) {
+        const formattedErrors = formatValidationErrors(validationErrors.array());
+        responseUtil.error(
+          res,
+          HTTP_STATUS.VALIDATION_ERROR,
+          'Validation failed',
+          formattedErrors
+        );
+        return;
+      }
+
+      const { token, password } = req.body;
+      await authService.resetPassword({ token, password });
+
+      responseUtil.success(
+        res,
+        HTTP_STATUS.OK,
+        'Password has been reset successfully. Please login with your new password.'
+      );
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * Change password
+   * POST /api/auth/change-password
+   */
+  public changePassword = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      // Check for validation errors
+      const validationErrors = validationResult(req);
+      if (!validationErrors.isEmpty()) {
+        const formattedErrors = formatValidationErrors(validationErrors.array());
+        responseUtil.error(
+          res,
+          HTTP_STATUS.VALIDATION_ERROR,
+          'Validation failed',
+          formattedErrors
+        );
+        return;
+      }
+
+      if (!req.user) {
+        responseUtil.unauthorized(res, 'Authentication required');
+        return;
+      }
+
+      const { currentPassword, newPassword } = req.body;
+      await authService.changePassword(req.user.id, {
+        currentPassword,
+        newPassword,
+      });
+
+      // Clear token cookies to force re-login
+      this.clearTokenCookies(res);
+
+      responseUtil.success(
+        res,
+        HTTP_STATUS.OK,
+        'Password changed successfully. Please login with your new password.'
+      );
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 // Export a singleton instance

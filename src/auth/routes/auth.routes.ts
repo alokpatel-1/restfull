@@ -12,6 +12,9 @@ import {
   loginValidation,
   updateProfileValidation,
   refreshTokenValidation,
+  forgotPasswordValidation,
+  resetPasswordValidation,
+  changePasswordValidation,
 } from '../validators/auth.validators';
 import { authMiddleware } from '../../middleware/auth.middleware';
 
@@ -47,6 +50,18 @@ class AuthRoutes {
       authController.refreshToken
     );
 
+    this.router.post(
+      '/forgot-password',
+      forgotPasswordValidation,
+      authController.forgotPassword
+    );
+
+    this.router.post(
+      '/reset-password',
+      resetPasswordValidation,
+      authController.resetPassword
+    );
+
     // Protected routes (require authentication)
     this.router.get(
       '/me',
@@ -71,6 +86,13 @@ class AuthRoutes {
       '/logout',
       authMiddleware.authenticate,
       authController.logout
+    );
+
+    this.router.post(
+      '/change-password',
+      authMiddleware.authenticate,
+      changePasswordValidation,
+      authController.changePassword
     );
   }
 }

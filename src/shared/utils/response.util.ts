@@ -27,11 +27,14 @@ class ResponseUtil {
     message: string,
     data?: unknown
   ): Response {
-    return res.status(statusCode).json({
+    const response: { success: boolean; message: string; data?: unknown } = {
       success: true,
       message,
-      ...(data && { data }),
-    });
+    };
+    if (data !== undefined && data !== null) {
+      response.data = data;
+    }
+    return res.status(statusCode).json(response);
   }
 
   /**
@@ -47,11 +50,14 @@ class ResponseUtil {
     message: string,
     errors?: unknown
   ): Response {
-    return res.status(statusCode).json({
+    const response: { success: boolean; message: string; errors?: unknown } = {
       success: false,
       message,
-      ...(errors && typeof errors === 'object' ? { errors } : {}),
-    });
+    };
+    if (errors !== undefined && errors !== null && typeof errors === 'object') {
+      response.errors = errors;
+    }
+    return res.status(statusCode).json(response);
   }
 
   /**

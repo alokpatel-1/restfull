@@ -68,7 +68,7 @@ class AuthMiddleware {
       req.user = {
         id: user._id.toString(),
         email: user.email,
-        role: user.role as Role,
+        role: user.role as Role[],
         permissions: user.permissions as Permission[],
       };
 

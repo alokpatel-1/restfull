@@ -8,7 +8,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { responseUtil } from '../shared/utils/response.util';
-import { Permission, PERMISSIONS, ROLES } from '../shared/constants/permissions';
+import { Permission, PERMISSIONS } from '../shared/constants/permissions';
 
 /**
  * Authorization middleware class
@@ -73,13 +73,13 @@ class AuthorizationMiddleware {
         return;
       }
 
-      const userRole = req.user.role;
+      const userRoles = req.user.role || [];
       const rolesArray = Array.isArray(requiredRoles)
         ? requiredRoles
         : [requiredRoles];
 
       // Check if user has at least one of the required roles
-      const hasRole = rolesArray.includes(userRole);
+      const hasRole = rolesArray.some((role) => userRoles.includes(role));
 
       if (!hasRole) {
         responseUtil.forbidden(
@@ -126,7 +126,7 @@ class AuthorizationMiddleware {
       // If not owner, check for required permission
       const userPermissions = req.user.permissions || [];
       const permissionToCheck =
-        requiredPermission || (PERMISSIONS[ROLES.ADMIN]?.[0] as Permission);
+        requiredPermission || PERMISSIONS.USERS_UPDATE;
 
       if (permissionToCheck && userPermissions.includes(permissionToCheck)) {
         return next();

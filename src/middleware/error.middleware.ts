@@ -10,9 +10,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { ServiceError } from '../shared/exceptions/service.error';
 import { responseUtil } from '../shared/utils/response.util';
-import { HTTP_STATUS } from '../shared/constants/httpStatus';
+import { HTTP_STATUS, HttpStatus } from '../shared/constants/httpStatus';
 import { logger } from '../shared/utils/logger';
-import { ValidationError } from 'mongoose';
+import mongoose from 'mongoose';
 
 /**
  * Error handling middleware class
@@ -31,7 +31,7 @@ class ErrorMiddleware {
     err: Error,
     req: Request,
     res: Response,
-    next: NextFunction
+    _next: NextFunction
   ): void {
     // Log the error for debugging
     logger.error('Error occurred:', {
@@ -43,13 +43,13 @@ class ErrorMiddleware {
 
     // Handle ServiceError (business logic errors)
     if (err instanceof ServiceError) {
-      responseUtil.error(res, err.statusCode as HTTP_STATUS, err.message);
+      responseUtil.error(res, err.statusCode as HttpStatus, err.message);
       return;
     }
 
     // Handle Mongoose validation errors
-    if (err instanceof ValidationError) {
-      const errors = Object.values(err.errors).map((e) => ({
+    if (err instanceof mongoose.Error.ValidationError) {
+      const errors = Object.values(err.errors).map((e: mongoose.Error.ValidatorError | mongoose.Error.CastError) => ({
         field: e.path,
         message: e.message,
       }));

@@ -15,9 +15,11 @@ export interface IUser extends Document {
     name: string;
     email: string;
     password: string;
-    role: string;
+    role: string[];
     permissions: string[];
     refreshToken?: string;
+    resetToken?: string;
+    resetTokenExpiry?: Date;
     isActive: boolean;
     deleted: boolean;
     createdAt: Date;
@@ -52,8 +54,8 @@ const userSchema = new Schema<IUser>(
             select: false, // Don't include password in queries by default
         },
         role: {
-            type: String,
-            default: 'user',
+            type: [String],
+            default: ['user'],
             enum: ['user', 'admin', 'moderator'],
         },
         permissions: {
@@ -73,6 +75,14 @@ const userSchema = new Schema<IUser>(
             type: Boolean,
             default: false,
             index: true, // Index for faster queries
+        },
+        resetToken: {
+            type: String,
+            select: false, // Don't include reset token in queries by default
+        },
+        resetTokenExpiry: {
+            type: Date,
+            select: false, // Don't include reset token expiry in queries by default
         },
     },
     {

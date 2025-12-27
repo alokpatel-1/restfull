@@ -9,7 +9,6 @@
 import mongoose, { Connection, Mongoose } from 'mongoose';
 import { envConfig } from './env.config';
 import { logger } from '../shared/utils/logger';
-import { Permission } from '../shared/constants/permissions';
 
 /**
  * Database configuration class

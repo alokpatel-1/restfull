@@ -62,5 +62,5 @@ export type Permission = PERMISSIONS | string;
 /**
  * Type for role values
  */
-export type Role = ROLES;
+export type Role = ROLES | string;
 

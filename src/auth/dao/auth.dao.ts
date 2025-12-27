@@ -19,7 +19,7 @@ class AuthDao {
     name: string;
     email: string;
     password: string;
-    role?: string;
+    role?: string[];
     permissions?: string[];
   }): Promise<IUser> {
     const user = new User(userData);
@@ -61,7 +61,7 @@ class AuthDao {
       name?: string;
       email?: string;
       password?: string;
-      role?: string;
+      role?: string[];
       permissions?: string[];
       refreshToken?: string;
       isActive?: boolean;
@@ -179,6 +179,51 @@ class AuthDao {
       isActive: true
     }).exec();
     return !!user;
+  }
+
+  /**
+   * Find user by reset token (only active and not deleted users)
+   */
+  async findByResetToken(resetToken: string): Promise<IUser | null> {
+    return await User.findOne({
+      resetToken,
+      deleted: false,
+      isActive: true,
+      resetTokenExpiry: { $gt: new Date() }, // Token must not be expired
+    })
+      .select('+resetToken +resetTokenExpiry')
+      .exec();
+  }
+
+  /**
+   * Set password reset token for user
+   */
+  async setResetToken(
+    userId: string,
+    resetToken: string,
+    resetTokenExpiry: Date
+  ): Promise<IUser | null> {
+    return await User.findByIdAndUpdate(
+      userId,
+      {
+        resetToken,
+        resetTokenExpiry,
+      },
+      { new: true }
+    ).exec();
+  }
+
+  /**
+   * Clear password reset token for user
+   */
+  async clearResetToken(userId: string): Promise<IUser | null> {
+    return await User.findByIdAndUpdate(
+      userId,
+      {
+        $unset: { resetToken: '', resetTokenExpiry: '' },
+      },
+      { new: true }
+    ).exec();
   }
 }
 

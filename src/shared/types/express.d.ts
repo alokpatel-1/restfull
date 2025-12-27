@@ -6,8 +6,7 @@
  * custom properties added by middleware (e.g., user data from JWT).
  */
 
-import { Request } from 'express';
-import { Role, Permission } from '../constants/permissions';
+import { Permission } from '../constants/permissions';
 
 declare global {
     namespace Express {
@@ -16,10 +15,13 @@ declare global {
             user?: {
                 id: string;
                 email: string;
-                role: Role;
+                role: string[]; // Array of role strings
                 permissions: Permission[];
             };
         }
     }
 }
+
+// Export empty object to make this a module
+export { };
 

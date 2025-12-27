@@ -6,6 +6,7 @@
  */
 
 import jwt, { SignOptions } from 'jsonwebtoken';
+import crypto from 'crypto';
 import { envConfig } from '../../config/env.config';
 import { authDao } from '../dao/auth.dao';
 import {
@@ -16,6 +17,9 @@ import {
   AuthResponseDto,
   RefreshTokenDto,
   RefreshTokenResponseDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+  ChangePasswordDto,
 } from '../dto/auth.dto';
 import { IUser } from '../models/auth.model';
 import { ServiceError } from '../../shared/exceptions/service.error';
@@ -85,7 +89,7 @@ class AuthService {
       name: data.name,
       email: data.email,
       password: data.password,
-      role: 'user',
+      role: ['user'],
       permissions: [],
     });
 
@@ -230,6 +234,113 @@ class AuthService {
    * Logout user (clear refresh token)
    */
   async logout(userId: string): Promise<void> {
+    await authDao.clearRefreshToken(userId);
+  }
+
+  /**
+   * Generate password reset token
+   */
+  private generateResetToken(): string {
+    // Generate a random token (32 bytes = 64 hex characters)
+    return crypto.randomBytes(32).toString('hex');
+  }
+
+  /**
+   * Forgot password - generate and send reset token
+   */
+  async forgotPassword(data: ForgotPasswordDto): Promise<void> {
+    const user = await authDao.findByEmail(data.email);
+
+    // Always return success to prevent email enumeration
+    // Don't reveal if email exists or not
+    if (!user) {
+      return; // Silent fail for security
+    }
+
+    // Generate reset token
+    const resetToken = this.generateResetToken();
+    const resetTokenExpiry = new Date();
+    resetTokenExpiry.setHours(resetTokenExpiry.getHours() + 1); // Token expires in 1 hour
+
+    // Save reset token to database
+    await authDao.setResetToken(
+      user._id.toString(),
+      resetToken,
+      resetTokenExpiry
+    );
+
+    // TODO: Send email with reset token
+    // In production, you would send an email here with the reset token
+    // For now, we'll just log it (remove in production)
+    console.log(`Password reset token for ${user.email}: ${resetToken}`);
+  }
+
+  /**
+   * Reset password using reset token
+   */
+  async resetPassword(data: ResetPasswordDto): Promise<void> {
+    // Find user by reset token
+    const user = await authDao.findByResetToken(data.token);
+    if (!user) {
+      throw new ServiceError('Invalid or expired reset token', 400);
+    }
+
+    // Update password (will be hashed by pre-save hook)
+    await authDao.updateById(user._id.toString(), {
+      password: data.password,
+    });
+
+    // Clear reset token
+    await authDao.clearResetToken(user._id.toString());
+
+    // Clear refresh token for security (force re-login)
+    await authDao.clearRefreshToken(user._id.toString());
+  }
+
+  /**
+   * Change password (requires current password)
+   */
+  async changePassword(
+    userId: string,
+    data: ChangePasswordDto
+  ): Promise<void> {
+    // Find user with password
+    const user = await authDao.findById(userId);
+    if (!user) {
+      throw new ServiceError('User not found', 404);
+    }
+
+    // Get user with password field
+    const userWithPassword = await authDao.findByEmail(user.email, true);
+    if (!userWithPassword) {
+      throw new ServiceError('User not found', 404);
+    }
+
+    // Verify current password
+    const isPasswordValid = await userWithPassword.comparePassword(
+      data.currentPassword
+    );
+    if (!isPasswordValid) {
+      throw new ServiceError('Current password is incorrect', 401);
+    }
+
+    // Check if new password is different from current password
+    const isSamePassword = await userWithPassword.comparePassword(
+      data.newPassword
+    );
+    if (isSamePassword) {
+      throw new ServiceError(
+        'New password must be different from current password',
+        400
+      );
+    }
+
+    // Update password (will be hashed by pre-save hook)
+    await authDao.updateById(userId, {
+      password: data.newPassword,
+    });
+
+    // Clear refresh token for security (force re-login)
     await authDao.clearRefreshToken(userId);
   }
 }
