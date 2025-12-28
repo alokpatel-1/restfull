@@ -28,6 +28,19 @@ class EnvConfig {
   public readonly JWT_REFRESH_SECRET: string;
   public readonly JWT_REFRESH_EXPIRES_IN: string;
 
+  // Email configuration
+  public readonly SMTP_HOST: string;
+  public readonly SMTP_PORT: number;
+  public readonly SMTP_SECURE: boolean;
+  public readonly SMTP_USER: string;
+  public readonly SMTP_PASS: string;
+  public readonly EMAIL_FROM: string;
+  public readonly EMAIL_FROM_NAME: string;
+  public readonly APP_URL: string;
+
+  // CORS configuration
+  public readonly CORS_ORIGIN: string;
+
   constructor() {
     // Server configuration
     this.PORT = parseInt(process.env.PORT || '3000', 10);
@@ -42,6 +55,18 @@ class EnvConfig {
     this.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key-change-in-production';
     this.JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
 
+    // Email configuration
+    this.SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
+    this.SMTP_PORT = parseInt(process.env.SMTP_PORT || '587', 10);
+    this.SMTP_SECURE = process.env.SMTP_SECURE === 'true' || process.env.SMTP_PORT === '465';
+    this.SMTP_USER = process.env.SMTP_USER || '';
+    this.SMTP_PASS = process.env.SMTP_PASS || '';
+    this.EMAIL_FROM = process.env.EMAIL_FROM || process.env.SMTP_USER || 'noreply@example.com';
+    this.EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || 'App 2026';
+    this.APP_URL = process.env.APP_URL || 'http://localhost:3000/api';
+
+    // CORS configuration
+    this.CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:4200';
     // Validate required environment variables
     this.validate();
   }

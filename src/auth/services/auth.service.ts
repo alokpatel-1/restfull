@@ -23,6 +23,11 @@ import {
 } from '../dto/auth.dto';
 import { IUser } from '../models/auth.model';
 import { ServiceError } from '../../shared/exceptions/service.error';
+import { emailService } from '../../shared/utils/email.service';
+import {
+  passwordResetTemplate,
+  welcomeTemplate,
+} from '../../shared/utils/email.templates';
 
 /**
  * Auth service class
@@ -99,6 +104,12 @@ class AuthService {
 
     // Save refresh token to database
     await authDao.updateRefreshToken(user._id.toString(), refreshToken);
+
+    // Send welcome email (non-blocking)
+    this.sendWelcomeEmail(user).catch((error) => {
+      // Log error but don't fail registration
+      console.error('Failed to send welcome email:', error);
+    });
 
     return {
       user: this.toUserResponseDto(user),
@@ -269,10 +280,8 @@ class AuthService {
       resetTokenExpiry
     );
 
-    // TODO: Send email with reset token
-    // In production, you would send an email here with the reset token
-    // For now, we'll just log it (remove in production)
-    console.log(`Password reset token for ${user.email}: ${resetToken}`);
+    // Send password reset email
+    await this.sendPasswordResetEmail(user, resetToken);
   }
 
   /**
@@ -342,6 +351,69 @@ class AuthService {
 
     // Clear refresh token for security (force re-login)
     await authDao.clearRefreshToken(userId);
+  }
+
+  /**
+   * Send welcome email to newly registered user
+   */
+  private async sendWelcomeEmail(user: IUser): Promise<void> {
+    try {
+      const loginLink = `${envConfig.APP_URL}/auth/login`;
+      const template = welcomeTemplate({
+        name: user.name,
+        loginLink,
+      });
+
+      const emailSent = await emailService.sendEmailWithBoth(
+        user.email,
+        'Welcome to App ' + new Date().getFullYear() + '!',
+        template.html,
+        template.text
+      );
+
+      if (emailSent) {
+        console.log(`Welcome email sent successfully to user: ${user.email}`);
+      } else {
+        console.warn(`Failed to send welcome email to user: ${user.email}. Check SMTP configuration.`);
+      }
+    } catch (error) {
+      // Log error but don't throw - email failure shouldn't break registration
+      console.error('Error sending welcome email:', error);
+    }
+  }
+
+  /**
+   * Send password reset email
+   */
+  private async sendPasswordResetEmail(
+    user: IUser,
+    resetToken: string
+  ): Promise<void> {
+    try {
+      const resetLink = `${envConfig.APP_URL}/reset-password?token=${resetToken}`;
+      const template = passwordResetTemplate({
+        name: user.name,
+        resetLink,
+        expiryMinutes: 60, // Token expires in 1 hour
+      });
+
+      const emailSent = await emailService.sendEmailWithBoth(
+        user.email,
+        'Password Reset Request',
+        template.html,
+        template.text
+      );
+
+      if (emailSent) {
+        console.log(`Password reset email sent successfully to user: ${user.email}`);
+      } else {
+        console.warn(`Failed to send password reset email to user: ${user.email}. Check SMTP configuration.`);
+      }
+    } catch (error) {
+      // Log error but don't throw - email failure shouldn't break password reset flow
+      // The token is still saved, user can request again if email fails
+      console.error('Error sending password reset email:', error);
+    }
   }
 }
 

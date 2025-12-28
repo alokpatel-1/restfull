@@ -7,10 +7,12 @@
  */
 
 import express, { Application } from 'express';
+import cors from 'cors';
 import routes from './routes';
 import { errorMiddleware } from './middleware/error.middleware';
 import { logger } from './shared/utils/logger';
 import cookieParser from 'cookie-parser';
+import { envConfig } from './config/env.config';
 
 
 /**
@@ -19,6 +21,18 @@ import cookieParser from 'cookie-parser';
  */
 export function createApp(): Application {
   const app: Application = express();
+
+  // Middleware: CORS configuration
+  const corsOptions: cors.CorsOptions = {
+    origin: envConfig.CORS_ORIGIN === '*' 
+      ? true // Allow all origins (not recommended for production)
+      : envConfig.CORS_ORIGIN.split(',').map((origin) => origin.trim()),
+    credentials: true, // Allow cookies to be sent
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    exposedHeaders: ['Content-Type'],
+  };
+  app.use(cors(corsOptions));
 
   // Middleware: Parse JSON request bodies
   app.use(express.json());
