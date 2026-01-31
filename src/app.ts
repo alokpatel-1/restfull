@@ -1,17 +1,8 @@
-/**
- * Express Application Setup
- * 
- * This file initializes and configures the Express application.
- * It sets up middleware, routes, and error handling.
- * This is the core application file that wires everything together.
- */
-
 import express, { Application } from 'express';
-import routes from './routes';
-import { errorMiddleware } from './middleware/error.middleware';
-import { logger } from './utils/logger';
 import cookieParser from 'cookie-parser';
-
+import { errorMiddleware } from './middleware/error.middleware';
+import authRoutes from './modules/auth/auth.routes';
+import userRoutes from './modules/user/user.routes';
 
 /**
  * Creates and configures the Express application
@@ -29,17 +20,9 @@ export function createApp(): Application {
   // Middleware: Parse cookies
   app.use(cookieParser());
 
-  // Middleware: Request logging
-  app.use((req, res, next) => {
-    logger.info(`${req.method} ${req.path}`, {
-      ip: req.ip,
-      userAgent: req.get('user-agent'),
-    });
-    next();
-  });
-
-  // Routes: Mount API routes
-  app.use('/api', routes);
+  // Routes: Module routes
+  app.use('/api/auth', authRoutes);
+  app.use('/api/users', userRoutes);
 
   // Error handling: 404 handler (must be after all routes)
   app.use(errorMiddleware.handleNotFound.bind(errorMiddleware));
@@ -49,4 +32,3 @@ export function createApp(): Application {
 
   return app;
 }
-
