@@ -10,7 +10,7 @@ export class ErrorMiddleware {
   /**
    * Handle 404 Not Found errors
    */
-  handleNotFound(req: Request, res: Response, next: NextFunction): void {
+  handleNotFound(_req: Request, res: Response, _next: NextFunction): void {
     res.status(404).json({
       success: false,
       message: 'Route not found',
@@ -22,9 +22,9 @@ export class ErrorMiddleware {
    */
   handleError(
     err: Error,
-    req: Request,
+    _req: Request,
     res: Response,
-    next: NextFunction
+    _next: NextFunction
   ): void {
     console.error('Error:', err);
 

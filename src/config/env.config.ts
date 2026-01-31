@@ -16,4 +16,11 @@ export const envConfig = {
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '15m',
   JWT_REFRESH_SECRET: (process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key-change-in-production') as string,
   JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
+  // Mail (SMTP)
+  SMTP_HOST: process.env.SMTP_HOST || 'localhost',
+  SMTP_PORT: parseInt(process.env.SMTP_PORT || '587', 10),
+  SMTP_USER: process.env.SMTP_USER || '',
+  SMTP_PASS: process.env.SMTP_PASS || '',
+  MAIL_FROM: process.env.MAIL_FROM || 'noreply@example.com',
+  APP_BASE_URL: process.env.APP_BASE_URL || 'http://localhost:3000',
 };

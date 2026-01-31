@@ -21,6 +21,57 @@ export class AuthDao {
         return await UserModel.findOne({ email });
     }
 
+    async updateUserEmailVerificationToken(
+        userId: string,
+        token: string,
+        expiresAt: Date
+    ): Promise<void> {
+        await UserModel.findByIdAndUpdate(userId, {
+            emailVerificationToken: token,
+            emailVerificationExpires: expiresAt,
+        });
+    }
+
+    async findUserByEmailVerificationToken(token: string): Promise<IUser | null> {
+        return await UserModel.findOne({ emailVerificationToken: token }).select(
+            '+emailVerificationToken +emailVerificationExpires'
+        );
+    }
+
+    async setUserEmailVerified(userId: string): Promise<void> {
+        await UserModel.findByIdAndUpdate(userId, {
+            $set: { emailVerified: true },
+            $unset: { emailVerificationToken: '', emailVerificationExpires: '' },
+        });
+    }
+
+    async updateUserPasswordResetToken(
+        userId: string,
+        hashedToken: string,
+        expiresAt: Date
+    ): Promise<void> {
+        await UserModel.findByIdAndUpdate(userId, {
+            passwordResetToken: hashedToken,
+            passwordResetExpires: expiresAt,
+        });
+    }
+
+    async findUserByPasswordResetToken(hashedToken: string): Promise<IUser | null> {
+        return await UserModel.findOne({ passwordResetToken: hashedToken }).select(
+            '+passwordResetToken +passwordResetExpires'
+        );
+    }
+
+    async clearUserPasswordReset(userId: string): Promise<void> {
+        await UserModel.findByIdAndUpdate(userId, {
+            $unset: { passwordResetToken: '', passwordResetExpires: '' },
+        });
+    }
+
+    async updateUserPassword(userId: string, hashedPassword: string): Promise<void> {
+        await UserModel.findByIdAndUpdate(userId, { password: hashedPassword });
+    }
+
     async verifyPassword(plainPassword: string, hashedPassword: string): Promise<boolean> {
         return await bcrypt.compare(plainPassword, hashedPassword);
     }
