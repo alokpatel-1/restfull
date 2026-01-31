@@ -1,8 +1,14 @@
 import { UserModel, IUser } from '../user/user.model';
+import { RoleModel, IRole } from '../role/role.model';
 import { RegisterDto } from './auth.dto';
 import { RefreshTokenModel, IRefreshToken } from './refresh-token.model';
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
+
+export interface RoleDetails {
+    id: string;
+    name: string;
+}
 
 export class AuthDao {
     async createUser(userData: RegisterDto): Promise<IUser> {
@@ -19,6 +25,42 @@ export class AuthDao {
 
     async findUserByEmail(email: string): Promise<IUser | null> {
         return await UserModel.findOne({ email });
+    }
+
+    async findRoleByName(name: string): Promise<IRole | null> {
+        return await RoleModel.findOne({ name: name.toUpperCase() });
+    }
+
+    async updateUserRole(userId: string, roleIds: string[]): Promise<void> {
+        const objectIds = roleIds.map((id) => new mongoose.Types.ObjectId(id));
+        await UserModel.findByIdAndUpdate(userId, { role: objectIds });
+    }
+
+    async getRolesAndPermissions(userId: string): Promise<{
+        roleDetails: RoleDetails[];
+        permissions: string[];
+    }> {
+        const user = await UserModel.findById(userId)
+            .populate<{ role: IRole[] }>('role')
+            .select('role customPermissions')
+            .lean();
+
+        if (!user) {
+            return { roleDetails: [], permissions: [] };
+        }
+
+        const roles = user.role || [];
+        const roleDetails: RoleDetails[] = roles
+            .filter((r): r is IRole => r && typeof r === 'object' && 'name' in r)
+            .map((r) => ({ id: r._id.toString(), name: r.name }));
+
+        const rolePerms = roles
+            .filter((r): r is IRole => r && typeof r === 'object' && 'permissions' in r)
+            .flatMap((r) => r.permissions || []);
+        const customPerms = user.customPermissions || [];
+        const permissions = [...new Set([...customPerms, ...rolePerms])];
+
+        return { roleDetails, permissions };
     }
 
     async updateUserEmailVerificationToken(

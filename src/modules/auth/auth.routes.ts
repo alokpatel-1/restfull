@@ -3,7 +3,6 @@ import { AuthController } from './auth.controller';
 import {
     registerValidator,
     loginValidator,
-    refreshTokenValidator,
     forgotPasswordValidator,
     resetPasswordValidator,
     validate,
@@ -18,11 +17,11 @@ router.post('/register', registerValidator, validate, authController.register);
 // POST /api/auth/login - Login user
 router.post('/login', loginValidator, validate, authController.login);
 
-// POST /api/auth/refresh - Refresh access token
-router.post('/refresh', refreshTokenValidator, validate, authController.refresh);
+// POST /api/auth/refresh - Refresh access token (token in body or cookie)
+router.post('/refresh', authController.refresh);
 
-// POST /api/auth/logout - Logout user (revoke refresh token)
-router.post('/logout', refreshTokenValidator, validate, authController.logout);
+// POST /api/auth/logout - Logout user (token in body or cookie; clears cookies)
+router.post('/logout', authController.logout);
 
 // GET or POST /api/auth/verify-email - Verify email (token in query or body)
 router.get('/verify-email', authController.verifyEmail);

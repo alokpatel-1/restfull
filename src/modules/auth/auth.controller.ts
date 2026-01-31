@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import { envConfig } from '../../config/env.config';
 import { AuthService } from './auth.service';
 import { AuthDao } from './auth.dao';
-import { RegisterDto, LoginDto, RefreshTokenDto, ForgotPasswordDto, ResetPasswordDto } from './auth.dto';
+import { RegisterDto, LoginDto, ForgotPasswordDto, ResetPasswordDto } from './auth.dto';
 
 export class AuthController {
   private authService: AuthService;
@@ -38,28 +38,29 @@ export class AuthController {
       const result = await this.authService.register(registerData);
 
       if (!result.success || !result.user) {
-        res.status(400).json({ success: false, message: result.message });
+        res.status(400).json({ success: false, code: result.code, message: result.message });
         return;
       }
 
       res.status(201).json({
         success: true,
+        code: result.code,
         message: result.message,
-        data: {
-          user: {
-            id: result.user._id.toString(),
-            name: result.user.name,
-            email: result.user.email,
-            emailVerified: false,
-          },
-          accessToken: result.accessToken,
-          refreshToken: result.refreshToken,
-        },
       });
     } catch (error) {
       next(error);
     }
   };
+
+  private getCookieOptions(maxAgeMs: number, httpOnly = true): { httpOnly: boolean; secure: boolean; sameSite: 'none'; maxAge: number; path: string } {
+    return {
+      httpOnly,
+      secure: true, // required when sameSite is 'none'; localhost is treated as secure
+      sameSite: 'none', // required so cookies are sent on cross-origin requests (e.g. frontend :4200 -> API :3000)
+      maxAge: maxAgeMs,
+      path: '/',
+    };
+  }
 
   login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -67,22 +68,36 @@ export class AuthController {
       const result = await this.authService.login(loginData);
 
       if (!result.success || !result.user) {
-        res.status(401).json({ success: false, message: result.message });
+        res.status(401).json({ success: false, code: result.code, message: result.message });
         return;
       }
 
+      const accessTokenMaxAge = 15 * 60 * 1000;
+      const refreshTokenMaxAge = 7 * 24 * 60 * 60 * 1000;
+
+      const userData = {
+        id: result.user._id.toString(),
+        name: result.user.name,
+        email: result.user.email,
+        emailVerified: result.user.emailVerified ?? false,
+        role: result.roleDetails ?? [],
+        permissions: result.permissions ?? [],
+      };
+
+      res.cookie('accessToken', result.accessToken, this.getCookieOptions(accessTokenMaxAge));
+      res.cookie('refreshToken', result.refreshToken, this.getCookieOptions(refreshTokenMaxAge));
+      res.cookie(
+        'userData',
+        Buffer.from(JSON.stringify(userData), 'utf-8').toString('base64url'),
+        this.getCookieOptions(accessTokenMaxAge, false)
+      );
+
       res.status(200).json({
         success: true,
+        code: result.code,
         message: result.message,
         data: {
-          user: {
-            id: result.user._id.toString(),
-            name: result.user.name,
-            email: result.user.email,
-            emailVerified: result.user.emailVerified ?? false,
-          },
-          accessToken: result.accessToken,
-          refreshToken: result.refreshToken,
+          user: userData,
         },
       });
     } catch (error) {
@@ -114,31 +129,31 @@ export class AuthController {
 
   refresh = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const refreshTokenData: RefreshTokenDto = req.body;
+      const refreshToken = req.body.refreshToken ?? req.cookies?.refreshToken;
 
-      const result = await this.authService.refreshToken(refreshTokenData);
-
-      if (!result.success || !result.userId) {
-        res.status(401).json({
-          success: false,
-          message: result.message,
-        });
+      if (!refreshToken) {
+        res.status(401).json({ success: false, message: 'Refresh token is required' });
         return;
       }
 
-      // Delete old refresh token
-      await this.authDao.deleteRefreshToken(refreshTokenData.refreshToken);
+      const result = await this.authService.refreshToken({ refreshToken });
 
-      // Generate new token pair
-      const { accessToken, refreshToken } = await this.generateTokenPair(result.userId);
+      if (!result.success || !result.userId) {
+        res.status(401).json({ success: false, message: result.message });
+        return;
+      }
+
+      await this.authDao.deleteRefreshToken(refreshToken);
+      const { accessToken, refreshToken: newRefreshToken } = await this.generateTokenPair(result.userId);
+
+      const accessTokenMaxAge = 15 * 60 * 1000;
+      const refreshTokenMaxAge = 7 * 24 * 60 * 60 * 1000;
+      res.cookie('accessToken', accessToken, this.getCookieOptions(accessTokenMaxAge));
+      res.cookie('refreshToken', newRefreshToken, this.getCookieOptions(refreshTokenMaxAge));
 
       res.status(200).json({
         success: true,
         message: 'Tokens refreshed successfully',
-        data: {
-          accessToken,
-          refreshToken,
-        },
       });
     } catch (error) {
       next(error);
@@ -147,21 +162,19 @@ export class AuthController {
 
   logout = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const refreshTokenData: RefreshTokenDto = req.body;
+      const refreshToken = req.body.refreshToken ?? req.cookies?.refreshToken;
 
-      const result = await this.authService.logout(refreshTokenData.refreshToken);
-
-      if (!result.success) {
-        res.status(400).json({
-          success: false,
-          message: result.message,
-        });
-        return;
+      if (refreshToken) {
+        await this.authService.logout(refreshToken);
       }
+
+      res.clearCookie('accessToken', { path: '/' });
+      res.clearCookie('refreshToken', { path: '/' });
+      res.clearCookie('userData', { path: '/' });
 
       res.status(200).json({
         success: true,
-        message: result.message,
+        message: 'Logged out successfully',
       });
     } catch (error) {
       next(error);

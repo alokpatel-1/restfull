@@ -7,6 +7,9 @@ export interface RegisterDto {
   name: string;
   email: string;
   password: string;
+  /** Optional role IDs. If omitted, user gets default USER role. */
+  role?: string[];
+  customPermissions?: string[];
 }
 
 export interface RefreshTokenDto {

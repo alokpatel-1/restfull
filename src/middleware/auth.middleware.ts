@@ -12,22 +12,22 @@ export class AuthMiddleware {
 
     /**
      * Middleware to authenticate user and attach user details to request
-     * Extracts user from JWT token and attaches to req.user
+     * Extracts user from JWT token (Authorization header or accessToken cookie)
      */
     authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
-            // Get token from Authorization header
             const authHeader = req.headers.authorization;
+            const tokenFromHeader = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+            const tokenFromCookie = (req as Request & { cookies?: { accessToken?: string } }).cookies?.accessToken;
+            const token = tokenFromHeader ?? tokenFromCookie;
 
-            if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            if (!token) {
                 res.status(401).json({
                     success: false,
                     message: 'No token provided',
                 });
                 return;
             }
-
-            const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 
             // Verify token
             const decoded = jwt.verify(token, envConfig.JWT_SECRET) as { userId: string };
@@ -74,24 +74,24 @@ export class AuthMiddleware {
     optionalAuth = async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
         try {
             const authHeader = req.headers.authorization;
+            const tokenFromHeader = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+            const tokenFromCookie = (req as Request & { cookies?: { accessToken?: string } }).cookies?.accessToken;
+            const token = tokenFromHeader ?? tokenFromCookie;
 
-            if (authHeader && authHeader.startsWith('Bearer ')) {
-                const token = authHeader.substring(7);
+            if (token) {
                 try {
                     const decoded = jwt.verify(token, envConfig.JWT_SECRET) as { userId: string };
                     const user = await this.userDao.findUserById(decoded.userId);
-
                     if (user) {
                         req.user = user;
                     }
-                } catch (error) {
+                } catch (_error) {
                     // Ignore token errors for optional auth
                 }
             }
 
             next();
-        } catch (error) {
-            // Ignore errors for optional auth
+        } catch (_error) {
             next();
         }
     };

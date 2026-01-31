@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { envConfig } from '../../config/env.config';
+import { AuthCode } from './auth-codes.enum';
 import { AuthDao } from './auth.dao';
 import { RegisterDto, LoginDto, RefreshTokenDto, ForgotPasswordDto, ResetPasswordDto } from './auth.dto';
 import { IUser } from '../user/user.model';
@@ -38,12 +39,13 @@ export class AuthService {
 
   async register(
     registerData: RegisterDto
-  ): Promise<{ success: boolean; message: string; user?: IUser; accessToken?: string; refreshToken?: string }> {
+  ): Promise<{ success: boolean; message: string; code?: AuthCode; user?: IUser; accessToken?: string; refreshToken?: string }> {
     const existingUser = await this.authDao.findUserByEmail(registerData.email);
 
     if (existingUser) {
       return {
         success: false,
+        code: AuthCode.USER_ALREADY_EXISTS,
         message: 'User with this email already exists',
       };
     }
@@ -60,37 +62,48 @@ export class AuthService {
 
     return {
       success: true,
-      message: 'Please verify your email.',
+      code: AuthCode.REGISTRATION_SUCCESS,
+      message: 'Registration successful. You receive a mail verification link on your given email. Please verify this to login.',
       user,
       accessToken,
       refreshToken,
     };
   }
 
-  async verifyEmail(token: string): Promise<{ success: boolean; message: string }> {
+  async verifyEmail(token: string): Promise<{ success: boolean; message: string; code?: AuthCode }> {
     const user = await this.authDao.findUserByEmailVerificationToken(token);
 
     if (!user || !user.emailVerificationToken || !user.emailVerificationExpires) {
-      return { success: false, message: 'Invalid or expired verification token' };
+      return { success: false, code: AuthCode.VERIFICATION_INVALID, message: 'Invalid or expired verification token' };
     }
 
     if (user.emailVerificationExpires < new Date()) {
-      return { success: false, message: 'Verification token has expired' };
+      return { success: false, code: AuthCode.VERIFICATION_EXPIRED, message: 'Verification token has expired' };
     }
 
     await this.authDao.setUserEmailVerified(user._id.toString());
-    return { success: true, message: 'Email verified successfully' };
+    return { success: true, code: AuthCode.VERIFICATION_SUCCESS, message: 'Email verified successfully' };
   }
 
   async login(
     loginData: LoginDto
-  ): Promise<{ success: boolean; message: string; user?: IUser; accessToken?: string; refreshToken?: string }> {
+  ): Promise<{
+    success: boolean;
+    message: string;
+    code?: AuthCode;
+    user?: IUser;
+    accessToken?: string;
+    refreshToken?: string;
+    roleDetails?: { id: string; name: string }[];
+    permissions?: string[];
+  }> {
     const user = await this.authDao.findUserByEmail(loginData.email);
 
     if (!user) {
       return {
         success: false,
-        message: 'Invalid email or password',
+        code: AuthCode.INVALID_EMAIL,
+        message: 'Invalid email',
       };
     }
 
@@ -99,60 +112,87 @@ export class AuthService {
     if (!isPasswordValid) {
       return {
         success: false,
-        message: 'Invalid email or password',
+        code: AuthCode.INVALID_CREDENTIALS,
+        message: 'Invalid password',
+      };
+    }
+
+    if (!user.emailVerified) {
+      return {
+        success: false,
+        code: AuthCode.EMAIL_NOT_VERIFIED,
+        message: 'Please verify your email before signing in.',
+      };
+    }
+
+    if (!user.isActive || user.isDeleted) {
+      return {
+        success: false,
+        code: AuthCode.ACCOUNT_INACTIVE,
+        message: 'Your account is inactive or has been deactivated. Please contact support.',
       };
     }
 
     const { accessToken, refreshToken } = await this.generateTokenPair(user._id.toString());
+    const { roleDetails, permissions } = await this.authDao.getRolesAndPermissions(user._id.toString());
 
     return {
       success: true,
+      code: AuthCode.LOGIN_SUCCESS,
       message: 'Login successful',
       user,
       accessToken,
       refreshToken,
+      roleDetails,
+      permissions,
     };
   }
 
-  async refreshToken(refreshTokenData: RefreshTokenDto): Promise<{ success: boolean; message: string; userId?: string }> {
+  async refreshToken(
+    refreshTokenData: RefreshTokenDto
+  ): Promise<{ success: boolean; message: string; code?: AuthCode; userId?: string }> {
     const refreshToken = await this.authDao.findRefreshToken(refreshTokenData.refreshToken);
 
     if (!refreshToken) {
       return {
         success: false,
+        code: AuthCode.REFRESH_TOKEN_INVALID,
         message: 'Invalid refresh token',
       };
     }
 
-    // Check if token is expired
     if (refreshToken.expiresAt < new Date()) {
       await this.authDao.deleteRefreshToken(refreshTokenData.refreshToken);
       return {
         success: false,
+        code: AuthCode.REFRESH_TOKEN_EXPIRED,
         message: 'Refresh token expired',
       };
     }
 
-    // Get user ID from refresh token
     const userId = refreshToken.userId.toString();
 
     return {
       success: true,
+      code: AuthCode.REFRESH_SUCCESS,
       message: 'Token refresh successful',
       userId,
     };
   }
 
-  async logout(refreshToken: string): Promise<{ success: boolean; message: string }> {
+  async logout(refreshToken: string): Promise<{ success: boolean; message: string; code?: AuthCode }> {
     await this.authDao.deleteRefreshToken(refreshToken);
 
     return {
       success: true,
+      code: AuthCode.LOGOUT_SUCCESS,
       message: 'Logged out successfully',
     };
   }
 
-  async forgotPassword(data: ForgotPasswordDto): Promise<{ success: boolean; message: string }> {
+  async forgotPassword(
+    data: ForgotPasswordDto
+  ): Promise<{ success: boolean; message: string; code?: AuthCode }> {
     const user = await this.authDao.findUserByEmail(data.email);
 
     if (user) {
@@ -167,20 +207,23 @@ export class AuthService {
 
     return {
       success: true,
+      code: AuthCode.FORGOT_PASSWORD_SUCCESS,
       message: 'If an account exists with this email, you will receive a password reset link.',
     };
   }
 
-  async resetPassword(data: ResetPasswordDto): Promise<{ success: boolean; message: string }> {
+  async resetPassword(
+    data: ResetPasswordDto
+  ): Promise<{ success: boolean; message: string; code?: AuthCode }> {
     const hashedToken = crypto.createHash('sha256').update(data.token).digest('hex');
     const user = await this.authDao.findUserByPasswordResetToken(hashedToken);
 
     if (!user || !user.passwordResetToken || !user.passwordResetExpires) {
-      return { success: false, message: 'Invalid or expired token' };
+      return { success: false, code: AuthCode.RESET_PASSWORD_INVALID, message: 'Invalid or expired token' };
     }
 
     if (user.passwordResetExpires < new Date()) {
-      return { success: false, message: 'Invalid or expired token' };
+      return { success: false, code: AuthCode.RESET_PASSWORD_INVALID, message: 'Invalid or expired token' };
     }
 
     const hashedPassword = await bcrypt.hash(data.newPassword, 10);
@@ -188,6 +231,6 @@ export class AuthService {
     await this.authDao.clearUserPasswordReset(user._id.toString());
     await this.authDao.deleteAllRefreshTokensForUser(user._id.toString());
 
-    return { success: true, message: 'Password reset successfully' };
+    return { success: true, code: AuthCode.RESET_PASSWORD_SUCCESS, message: 'Password reset successfully' };
   }
 }
