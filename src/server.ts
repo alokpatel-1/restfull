@@ -8,6 +8,7 @@
 import { createApp } from './app';
 import { dbConfig } from './config/db.config';
 import { envConfig } from './config/env.config';
+import { seedRoles } from './modules/role/role.seed';
 import dotenv from 'dotenv';
 
 // Load environment variables
@@ -21,6 +22,9 @@ async function startServer(): Promise<void> {
     // Connect to database
     console.log('Connecting to MongoDB...');
     await dbConfig.connect();
+
+    // Seed default roles (USER, SELLER, ADMIN, SUPER_ADMIN) with permissions if not present
+    await seedRoles();
 
     // Create Express application
     const app = createApp();
