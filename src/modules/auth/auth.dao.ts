@@ -14,10 +14,19 @@ export class AuthDao {
     async createUser(userData: RegisterDto): Promise<IUser> {
         const hashedPassword = await bcrypt.hash(userData.password, 10);
 
+        let roleIds: mongoose.Types.ObjectId[];
+        if (userData.role && userData.role.length > 0) {
+            roleIds = userData.role.map((id) => new mongoose.Types.ObjectId(id));
+        } else {
+            const defaultRole = await this.findRoleByName('USER');
+            roleIds = defaultRole ? [defaultRole._id] : [];
+        }
+
         const user = new UserModel({
             name: userData.name,
             email: userData.email,
             password: hashedPassword,
+            role: roleIds,
         });
 
         return await user.save();
