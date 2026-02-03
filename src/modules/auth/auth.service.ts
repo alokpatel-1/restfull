@@ -2,16 +2,17 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { envConfig } from '../../config/env.config';
-import { AuthCode } from './auth-codes.enum';
 import { AuthDao } from './auth.dao';
 import { RegisterDto, LoginDto, RefreshTokenDto, ForgotPasswordDto, ResetPasswordDto } from './auth.dto';
-import { IUser } from '../user/user.model';
+import {
+  AuthCode,
+  AuthMessageResult,
+  AuthTokens,
+  RegisterResult,
+  LoginResult,
+  RefreshTokenResult,
+} from './auth.types';
 import { mailService } from '../../services/mail.service';
-
-export interface AuthTokens {
-  accessToken: string;
-  refreshToken: string;
-}
 
 export class AuthService {
   private authDao: AuthDao;
@@ -37,9 +38,7 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  async register(
-    registerData: RegisterDto
-  ): Promise<{ success: boolean; message: string; code?: AuthCode; user?: IUser; accessToken?: string; refreshToken?: string }> {
+  async register(registerData: RegisterDto): Promise<RegisterResult> {
     const existingUser = await this.authDao.findUserByEmail(registerData.email);
 
     if (existingUser) {
@@ -70,7 +69,7 @@ export class AuthService {
     };
   }
 
-  async verifyEmail(token: string): Promise<{ success: boolean; message: string; code?: AuthCode }> {
+  async verifyEmail(token: string): Promise<AuthMessageResult> {
     const user = await this.authDao.findUserByEmailVerificationToken(token);
 
     if (!user || !user.emailVerificationToken || !user.emailVerificationExpires) {
@@ -85,18 +84,7 @@ export class AuthService {
     return { success: true, code: AuthCode.VERIFICATION_SUCCESS, message: 'Email verified successfully' };
   }
 
-  async login(
-    loginData: LoginDto
-  ): Promise<{
-    success: boolean;
-    message: string;
-    code?: AuthCode;
-    user?: IUser;
-    accessToken?: string;
-    refreshToken?: string;
-    roleDetails?: { id: string; name: string }[];
-    permissions?: string[];
-  }> {
+  async login(loginData: LoginDto): Promise<LoginResult> {
     const user = await this.authDao.findUserByEmail(loginData.email);
 
     if (!user) {
@@ -148,9 +136,7 @@ export class AuthService {
     };
   }
 
-  async refreshToken(
-    refreshTokenData: RefreshTokenDto
-  ): Promise<{ success: boolean; message: string; code?: AuthCode; userId?: string }> {
+  async refreshToken(refreshTokenData: RefreshTokenDto): Promise<RefreshTokenResult> {
     const refreshToken = await this.authDao.findRefreshToken(refreshTokenData.refreshToken);
 
     if (!refreshToken) {
@@ -180,7 +166,7 @@ export class AuthService {
     };
   }
 
-  async logout(refreshToken: string): Promise<{ success: boolean; message: string; code?: AuthCode }> {
+  async logout(refreshToken: string): Promise<AuthMessageResult> {
     await this.authDao.deleteRefreshToken(refreshToken);
 
     return {
@@ -190,9 +176,7 @@ export class AuthService {
     };
   }
 
-  async forgotPassword(
-    data: ForgotPasswordDto
-  ): Promise<{ success: boolean; message: string; code?: AuthCode }> {
+  async forgotPassword(data: ForgotPasswordDto): Promise<AuthMessageResult> {
     const user = await this.authDao.findUserByEmail(data.email);
 
     if (user) {
@@ -212,9 +196,7 @@ export class AuthService {
     };
   }
 
-  async resetPassword(
-    data: ResetPasswordDto
-  ): Promise<{ success: boolean; message: string; code?: AuthCode }> {
+  async resetPassword(data: ResetPasswordDto): Promise<AuthMessageResult> {
     const hashedToken = crypto.createHash('sha256').update(data.token).digest('hex');
     const user = await this.authDao.findUserByPasswordResetToken(hashedToken);
 

@@ -5,6 +5,7 @@ import { envConfig } from '../../config/env.config';
 import { AuthService } from './auth.service';
 import { AuthDao } from './auth.dao';
 import { RegisterDto, LoginDto, ForgotPasswordDto, ResetPasswordDto } from './auth.dto';
+import { AuthTokens, CookieOptions, LoggedInUserData } from './auth.types';
 
 export class AuthController {
   private authService: AuthService;
@@ -23,7 +24,7 @@ export class AuthController {
     );
   }
 
-  private async generateTokenPair(userId: string): Promise<{ accessToken: string; refreshToken: string }> {
+  private async generateTokenPair(userId: string): Promise<AuthTokens> {
     const accessToken = this.generateAccessToken(userId);
     const refreshToken = crypto.randomBytes(64).toString('hex');
     const expiresAt = new Date();
@@ -52,7 +53,7 @@ export class AuthController {
     }
   };
 
-  private getCookieOptions(maxAgeMs: number, httpOnly = true): { httpOnly: boolean; secure: boolean; sameSite: 'none'; maxAge: number; path: string } {
+  private getCookieOptions(maxAgeMs: number, httpOnly = true): CookieOptions {
     return {
       httpOnly,
       secure: true, // required when sameSite is 'none'; localhost is treated as secure
@@ -75,7 +76,7 @@ export class AuthController {
       const accessTokenMaxAge = 15 * 60 * 1000;
       const refreshTokenMaxAge = 7 * 24 * 60 * 60 * 1000;
 
-      const userData = {
+      const userData: LoggedInUserData = {
         id: result.user._id.toString(),
         name: result.user.name,
         email: result.user.email,

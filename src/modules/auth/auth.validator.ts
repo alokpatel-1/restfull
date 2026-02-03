@@ -6,6 +6,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { body, ValidationChain, validationResult } from 'express-validator';
+import { AuthValidationErrorResponse, ValidationErrorItem } from './auth.types';
 
 export const registerValidator: ValidationChain[] = [
   body('name').trim().notEmpty().withMessage('Name is required'),
@@ -41,11 +42,17 @@ export const resetPasswordValidator: ValidationChain[] = [
 export const validate = (req: Request, res: Response, next: NextFunction): void => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    res.status(400).json({
+    const body: AuthValidationErrorResponse = {
       success: false,
       message: 'Validation failed',
-      errors: errors.array().map((e) => ({ field: e.type === 'field' ? e.path : undefined, msg: e.msg })),
-    });
+      errors: errors.array().map(
+        (e): ValidationErrorItem => ({
+          field: e.type === 'field' ? (e.path as string) : undefined,
+          msg: e.msg as string,
+        })
+      ),
+    };
+    res.status(400).json(body);
     return;
   }
   next();
