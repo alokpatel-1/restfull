@@ -1,21 +1,21 @@
 import { Router } from 'express';
+import { validateWith } from '../../middleware/validation.middleware';
 import { AuthController } from './auth.controller';
 import {
     registerValidator,
     loginValidator,
     forgotPasswordValidator,
     resetPasswordValidator,
-    validate,
 } from './auth.validator';
 
 const router = Router();
 const authController = new AuthController();
 
 // POST /api/auth/register - Register a new user
-router.post('/register', registerValidator, validate, authController.register);
+router.post('/register', ...validateWith(registerValidator), authController.register);
 
 // POST /api/auth/login - Login user
-router.post('/login', loginValidator, validate, authController.login);
+router.post('/login', ...validateWith(loginValidator), authController.login);
 
 // POST /api/auth/refresh - Refresh access token (token in body or cookie)
 router.post('/refresh', authController.refresh);
@@ -28,9 +28,9 @@ router.get('/verify-email', authController.verifyEmail);
 router.post('/verify-email', authController.verifyEmail);
 
 // POST /api/auth/forgot-password - Request password reset email
-router.post('/forgot-password', forgotPasswordValidator, validate, authController.forgotPassword);
+router.post('/forgot-password', ...validateWith(forgotPasswordValidator), authController.forgotPassword);
 
 // POST /api/auth/reset-password - Reset password with token
-router.post('/reset-password', resetPasswordValidator, validate, authController.resetPassword);
+router.post('/reset-password', ...validateWith(resetPasswordValidator), authController.resetPassword);
 
 export default router;
