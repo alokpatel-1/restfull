@@ -75,7 +75,7 @@ export interface LoggedInUserData {
   name: string;
   email: string;
   emailVerified: boolean;
-  role: RoleDetailResult[];
+  role: string[];
   permissions: string[];
 }
 

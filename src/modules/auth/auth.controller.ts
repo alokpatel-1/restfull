@@ -81,7 +81,7 @@ export class AuthController {
         name: result.user.name,
         email: result.user.email,
         emailVerified: result.user.emailVerified ?? false,
-        role: result.roleDetails ?? [],
+        role: result.roleDetails?.map((role) => role.name) ?? [],
         permissions: result.permissions ?? [],
       };
 
@@ -90,7 +90,7 @@ export class AuthController {
       res.cookie(
         'userData',
         Buffer.from(JSON.stringify(userData), 'utf-8').toString('base64url'),
-        this.getCookieOptions(accessTokenMaxAge, false)
+        this.getCookieOptions(accessTokenMaxAge)
       );
 
       res.status(200).json({
