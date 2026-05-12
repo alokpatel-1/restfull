@@ -26,6 +26,8 @@ export const envConfig = {
   MAIL_FROM: process.env.EMAIL_FROM || process.env.MAIL_FROM || 'noreply@example.com',
   MAIL_FROM_NAME: process.env.EMAIL_FROM_NAME || '',
   APP_BASE_URL: process.env.APP_BASE_URL || 'http://localhost:3000',
+  /** SPA origin for user-facing links in emails (accept-invite, login). Trailing slash stripped. */
+  FRONTEND_URL: (process.env.FRONTEND_URL || 'http://localhost:4200').replace(/\/$/, ''),
   /** Comma-separated allowed CORS origins (e.g. http://localhost:4200,https://app.example.com) */
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:4200',
 };

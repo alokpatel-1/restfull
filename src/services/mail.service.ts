@@ -141,6 +141,62 @@ export class MailService {
       text: `Hi ${name}, reset your password: ${resetUrl}`,
     });
   }
+
+  /**
+   * Send invitation email with set-password link. Link includes only `token` (email is inside the JWT and returned by GET/POST /api/invite/validate). Uses FRONTEND_URL (SPA), not the API base.
+   */
+  async sendInvitationEmail(
+    email: string,
+    token: string,
+    type: 'self' | 'shop_invite',
+    name?: string
+  ): Promise<void> {
+    const acceptInviteUrl = `${envConfig.FRONTEND_URL}/accept-invite?token=${encodeURIComponent(token)}`;
+    const brandName = envConfig.MAIL_FROM_NAME || 'Our App';
+    const isSelf = type === 'self';
+    const intro =
+      isSelf
+        ? 'You have requested an invitation to join as a shop admin. Click the button below to set your password and complete registration.'
+        : 'You have been invited to join as a seller/shop team member. Click the button below to set your password and activate your account.';
+    const displayName = name?.trim() || email.split('@')[0];
+    const content = `
+      <p style="margin: 0 0 8px; color: #111827; font-size: 16px; line-height: 1.5;">Hi ${displayName},</p>
+      <p style="margin: 0 0 16px; color: #374151; font-size: 15px; line-height: 1.6;">${intro}</p>
+      ${this.getButtonHtml(acceptInviteUrl, 'Set password')}
+      <p style="margin: 16px 0 0; color: #6b7280; font-size: 13px; line-height: 1.5;">This link expires in 2 days.</p>
+      <p style="margin: 12px 0 0; color: #9ca3af; font-size: 12px; line-height: 1.5;">If you did not expect this invitation, you can safely ignore this email.</p>
+    `;
+    const html = this.getEmailLayout(content, brandName);
+    const subject = isSelf ? 'Complete your shop admin registration' : 'You’re invited to join';
+    await this.send({
+      to: email,
+      subject,
+      html,
+      text: `Hi ${displayName}, ${intro} Set your password: ${acceptInviteUrl}`,
+    });
+  }
+
+  /**
+   * Notify that the email is already registered (no invitation created, no user created).
+   */
+  async sendAlreadyRegisteredEmail(email: string): Promise<void> {
+    const loginUrl = `${envConfig.FRONTEND_URL}/login`;
+    const brandName = envConfig.MAIL_FROM_NAME || 'Our App';
+    const displayName = email.split('@')[0];
+    const content = `
+      <p style="margin: 0 0 8px; color: #111827; font-size: 16px; line-height: 1.5;">Hi ${displayName},</p>
+      <p style="margin: 0 0 16px; color: #374151; font-size: 15px; line-height: 1.6;">An invitation was requested for this email, but an account already exists. You can log in with your existing account.</p>
+      ${this.getButtonHtml(loginUrl, 'Log in')}
+      <p style="margin: 12px 0 0; color: #9ca3af; font-size: 12px; line-height: 1.5;">If you forgot your password, use the "Forgot password" option on the login page.</p>
+    `;
+    const html = this.getEmailLayout(content, brandName);
+    await this.send({
+      to: email,
+      subject: 'You already have an account',
+      html,
+      text: `Hi ${displayName}, you already have an account. Log in: ${loginUrl}`,
+    });
+  }
 }
 
 export const mailService = new MailService();
