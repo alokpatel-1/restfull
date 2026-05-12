@@ -27,6 +27,9 @@ router.post('/logout', authController.logout);
 router.get('/verify-email', authController.verifyEmail);
 router.post('/verify-email', authController.verifyEmail);
 
+// GET /api/auth/verify-token - Verify auth token (token in query or header/cookie)
+router.get('/verify-token', authController.verifyAuthToken);
+
 // POST /api/auth/forgot-password - Request password reset email
 router.post('/forgot-password', ...validateWith(forgotPasswordValidator), authController.forgotPassword);
 

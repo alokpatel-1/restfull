@@ -11,6 +11,7 @@ import {
   RegisterResult,
   LoginResult,
   RefreshTokenResult,
+  VerifyTokenResult,
 } from './auth.types';
 import { mailService } from '../../services/mail.service';
 
@@ -131,6 +132,35 @@ export class AuthService {
       user,
       accessToken,
       refreshToken,
+      roleDetails,
+      permissions,
+    };
+  }
+
+  async getUserData(userId: string): Promise<VerifyTokenResult> {
+    const user = await this.authDao.findUserById(userId);
+
+    if (!user) {
+      return {
+        success: false,
+        message: 'User not found',
+      };
+    }
+
+    if (!user.isActive || user.isDeleted) {
+      return {
+        success: false,
+        code: AuthCode.ACCOUNT_INACTIVE,
+        message: 'Your account is inactive or has been deactivated. Please contact support.',
+      };
+    }
+
+    const { roleDetails, permissions } = await this.authDao.getRolesAndPermissions(userId);
+
+    return {
+      success: true,
+      message: 'User data fetched successfully',
+      user,
       roleDetails,
       permissions,
     };

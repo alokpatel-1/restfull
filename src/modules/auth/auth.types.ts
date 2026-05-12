@@ -95,6 +95,13 @@ export interface LoginResult extends AuthMessageResult {
   permissions?: string[];
 }
 
+/** Verify token result. */
+export interface VerifyTokenResult extends AuthMessageResult {
+  user?: IUser;
+  roleDetails?: RoleDetailResult[];
+  permissions?: string[];
+}
+
 /** Refresh token API result. */
 export interface RefreshTokenResult extends AuthMessageResult {
   userId?: string;

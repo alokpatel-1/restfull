@@ -32,6 +32,10 @@ export class AuthDao {
         return await UserModel.findOne({ email });
     }
 
+    async findUserById(userId: string): Promise<IUser | null> {
+        return await UserModel.findById(userId);
+    }
+
     async findRoleByName(name: string): Promise<IRole | null> {
         return await RoleModel.findOne({ name: name.toUpperCase() });
     }

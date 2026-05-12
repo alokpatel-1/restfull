@@ -7,7 +7,7 @@ import inviteRoutes from '../modules/invite-user/invite-user.routes';
 /** Rate limit for auth endpoints: 10 requests per 15 min per IP */
 const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 100,
   message: { success: false, message: 'Too many requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,

@@ -128,6 +128,51 @@ export class AuthController {
     }
   };
 
+  verifyAuthToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      // Token passed from angular app in query params (or authorization header/cookie as fallback)
+      const token = (req.query.token as string) || req.headers.authorization?.split(' ')[1] || req.cookies?.accessToken;
+
+      if (!token) {
+        res.status(401).json({ success: false, message: 'No token provided' });
+        return;
+      }
+
+      const decoded = jwt.verify(token, envConfig.JWT_SECRET) as { userId: string };
+
+      const result = await this.authService.getUserData(decoded.userId);
+
+      if (!result.success || !result.user) {
+        res.status(401).json({ success: false, message: result.message });
+        return;
+      }
+
+      const userData: LoggedInUserData = {
+        id: result.user._id.toString(),
+        name: result.user.name,
+        email: result.user.email,
+        emailVerified: result.user.emailVerified ?? false,
+        role: result.roleDetails?.map((role) => role.name) ?? [],
+        permissions: result.permissions ?? [],
+      };
+
+      res.status(200).json({
+        success: true,
+        code: 'LOGIN_SUCCESS',
+        message: 'Token verified successfully',
+        data: {
+          user: userData,
+        },
+      });
+    } catch (error) {
+      if (error instanceof jwt.JsonWebTokenError || error instanceof jwt.TokenExpiredError) {
+        res.status(401).json({ success: false, message: 'Invalid or expired token' });
+        return;
+      }
+      next(error);
+    }
+  };
+
   refresh = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const refreshToken = req.body.refreshToken ?? req.cookies?.refreshToken;
